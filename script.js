@@ -4,7 +4,8 @@ const state = {
     names: {},
     highlightColor: '#FF0000',
     recordedBlob: null,
-    mimeType: 'video/webm'
+    mimeType: 'video/webm',
+    processedVideos: new Set() // Track which videos have been shown
 };
 
 // Initialize
@@ -138,6 +139,9 @@ async function generateVideo() {
         showMessage('Preparing video generation...', 'info');
         showProgress(0, 'Initializing...');
         
+        // Reset processed videos
+        state.processedVideos.clear();
+        
         // Check browser compatibility
         if (!navigator.mediaDevices || !window.MediaRecorder) {
             throw new Error('Your browser does not support video recording. Please try Chrome, Edge, or Firefox.');
@@ -165,20 +169,26 @@ async function generateVideo() {
         // Setup MediaRecorder with supported codec
         const stream = canvas.captureStream(30);
         
-        const options = {
+        let options = {
             mimeType: mimeType,
             videoBitsPerSecond: 2500000 // Lower bitrate for compatibility
         };
         
-        // Remove mimeType if it's not supported
+        // Try to create MediaRecorder with options
+        let mediaRecorder;
         try {
-            const mediaRecorder = new MediaRecorder(stream, options);
+            mediaRecorder = new MediaRecorder(stream, options);
         } catch (e) {
             console.log('Falling back to default options');
-            delete options.mimeType;
+            // Try without mimeType
+            try {
+                options = { videoBitsPerSecond: 2500000 };
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e2) {
+                console.log('Falling back to no options');
+                mediaRecorder = new MediaRecorder(stream);
+            }
         }
-        
-        const mediaRecorder = new MediaRecorder(stream, options);
         
         const chunks = [];
         mediaRecorder.ondataavailable = (e) => {
@@ -196,8 +206,9 @@ async function generateVideo() {
             try {
                 const blob = new Blob(chunks, { type: mimeType });
                 state.recordedBlob = blob;
-                showMessage('Video generated successfully! Click Download to save.', 'success');
+                showMessage('✅ Video generated successfully! Click Download to save.', 'success');
                 document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('downloadBtn').style.background = '#4CAF50';
                 hideProgress();
             } catch (error) {
                 throw new Error('Failed to create video file: ' + error.message);
@@ -231,10 +242,13 @@ async function generateVideo() {
                 throw new Error(`Failed to play video ${videoNum}: ${e.message}`);
             }
             
+            // Add this video to processed set
+            state.processedVideos.add(videoNum);
+            
             // Render frames
             await new Promise((resolve) => {
                 let frameCount = 0;
-                const maxFrames = 300; // Limit to prevent infinite loop
+                const maxFrames = 450; // Allow more frames for longer videos
                 
                 const renderFrame = () => {
                     frameCount++;
@@ -273,7 +287,7 @@ async function generateVideo() {
                         console.warn('Failed to draw video frame:', e);
                     }
                     
-                    // Draw overlays
+                    // Draw overlays with persistent text
                     drawOverlays(ctx, canvas.width, canvas.height, titleText, highlightWord, endingText, videoNum);
                     
                     requestAnimationFrame(renderFrame);
@@ -287,13 +301,16 @@ async function generateVideo() {
         
         showProgress(95, 'Finalizing video...');
         
+        // Wait a bit before stopping to ensure final frames are captured
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // Stop recording
         mediaRecorder.stop();
         showProgress(100, 'Complete!');
         
     } catch (error) {
         console.error('Error:', error);
-        showMessage('Error: ' + error.message, 'error');
+        showMessage('❌ Error: ' + error.message, 'error');
         hideProgress();
     }
 }
@@ -358,7 +375,7 @@ function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, 
         ctx.fillText(fullTitle, width / 2, titleY);
     }
     
-    // Draw numbers 1-5
+    // Draw numbers 1-5 with persistent text
     ctx.font = `bold ${numberFontSize}px Arial`;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFF';
@@ -373,8 +390,8 @@ function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, 
         ctx.strokeText(numberText, numberX, numberY);
         ctx.fillText(numberText, numberX, numberY);
         
-        // Draw clip name if this is the current video
-        if (i === currentVideo && state.names[i]) {
+        // Draw clip name if this video has been processed and has a name
+        if (state.processedVideos.has(i) && state.names[i]) {
             ctx.font = `bold ${nameFontSize}px Arial`;
             ctx.strokeText(state.names[i], nameX, numberY);
             ctx.fillText(state.names[i], nameX, numberY);
@@ -387,22 +404,37 @@ function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, 
 
 function downloadVideo() {
     if (!state.recordedBlob) {
-        showMessage('No video to download. Generate first!', 'error');
+        showMessage('❌ No video to download. Generate first!', 'error');
         return;
     }
     
     try {
+        showMessage('Preparing download...', 'info');
+        
+        // Create download link
         const url = URL.createObjectURL(state.recordedBlob);
         const a = document.createElement('a');
         a.href = url;
         a.download = getFilename();
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        a.style.display = 'none';
         
-        showMessage('Video downloaded successfully!', 'success');
+        // Add to body, click, then remove
+        document.body.appendChild(a);
+        
+        // Use setTimeout to ensure the link is properly added
+        setTimeout(() => {
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessage('✅ Video downloaded successfully!', 'success');
+            }, 100);
+        }, 100);
+        
     } catch (error) {
-        showMessage('Download failed: ' + error.message, 'error');
+        console.error('Download error:', error);
+        showMessage('❌ Download failed: ' + error.message, 'error');
     }
 }
