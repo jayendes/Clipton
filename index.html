@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipton - Top 5 Video Editor</title>
+    <title>Clipton</title>
     <link rel="stylesheet" href="style.css">
 <script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
 </head>
@@ -16,17 +16,21 @@
         <div class="main-content">
             <!-- Video Upload Section -->
             <div class="upload-section">
-                <h2>Upload 5 Videos</h2>
+                <h2>Videos</h2>
                 
                 <div class="video-slots">
                     <div class="video-slot">
                         <div class="slot-header">
                             <span>Video Rank #1</span>
+                            <select class="res-selector" id="res1">
+                                <option value="mobile">Mobile</option>
+                                <option value="pc">PC</option>
+                            </select>
                         </div>
                         <input type="file" id="video1" accept="video/*">
                         <div class="name-input-group">
                             <input type="text" id="name1" placeholder="Clip name">
-                            <button class="magic-btn" data-video="1">🪄</button>
+                            <button class="magic-btn" data-video="1" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status1"></div>
                     </div>
@@ -34,11 +38,15 @@
                     <div class="video-slot">
                         <div class="slot-header">
                             <span>Video Rank #2</span>
+                            <select class="res-selector" id="res2">
+                                <option value="mobile">Mobile</option>
+                                <option value="pc">PC</option>
+                            </select>
                         </div>
                         <input type="file" id="video2" accept="video/*">
                         <div class="name-input-group">
                             <input type="text" id="name2" placeholder="Clip name">
-                            <button class="magic-btn" data-video="2">🪄</button>
+                            <button class="magic-btn" data-video="2" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status2"></div>
                     </div>
@@ -46,11 +54,15 @@
                     <div class="video-slot">
                         <div class="slot-header">
                             <span>Video Rank #3</span>
+                            <select class="res-selector" id="res3">
+                                <option value="mobile">Mobile</option>
+                                <option value="pc">PC</option>
+                            </select>
                         </div>
                         <input type="file" id="video3" accept="video/*">
                         <div class="name-input-group">
                             <input type="text" id="name3" placeholder="Clip name">
-                            <button class="magic-btn" data-video="3">🪄</button>
+                            <button class="magic-btn" data-video="3" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status3"></div>
                     </div>
@@ -58,11 +70,15 @@
                     <div class="video-slot">
                         <div class="slot-header">
                             <span>Video Rank #4</span>
+                            <select class="res-selector" id="res4">
+                                <option value="mobile">Mobile</option>
+                                <option value="pc">PC</option>
+                            </select>
                         </div>
                         <input type="file" id="video4" accept="video/*">
                         <div class="name-input-group">
                             <input type="text" id="name4" placeholder="Clip name">
-                            <button class="magic-btn" data-video="4">🪄</button>
+                            <button class="magic-btn" data-video="4" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status4"></div>
                     </div>
@@ -70,11 +86,15 @@
                     <div class="video-slot">
                         <div class="slot-header">
                             <span>Video Rank #5</span>
+                            <select class="res-selector" id="res5">
+                                <option value="mobile">Mobile</option>
+                                <option value="pc">PC</option>
+                            </select>
                         </div>
                         <input type="file" id="video5" accept="video/*">
                         <div class="name-input-group">
                             <input type="text" id="name5" placeholder="Clip name">
-                            <button class="magic-btn" data-video="5">🪄</button>
+                            <button class="magic-btn" data-video="5" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status5"></div>
                     </div>
@@ -86,32 +106,32 @@
                 <h2>Settings</h2>
                 
                 <div class="settings">
-                    <label>Title:</label>
-                    <input type="text" id="titleText" value="Ranking Top 5 Best" placeholder="Title">
-                    
-                    <label>Highlight:</label>
-                    <input type="text" id="highlightWord" placeholder="Highlight word">
-                    
-                    <label>Color:</label>
-                    <div class="color-buttons">
-                        <button class="color-btn red active" data-color="#FF0000">Red</button>
-                        <button class="color-btn green" data-color="#00FF00">Green</button>
-                        <button class="color-btn yellow" data-color="#FFFF00">Yellow</button>
+                    <div class="setting-row">
+                        <label>Title:</label>
+                        <input type="text" id="titleText" value="Ranking" placeholder="Title">
                     </div>
                     
-                    <label>Ending:</label>
-                    <input type="text" id="endingText" value="Moments" placeholder="Ending text">
+                    <div class="setting-row">
+                        <label>Top 5 Text:</label>
+                        <input type="text" id="top5Text" value="TOP 5" placeholder="TOP 5">
+                        <input type="color" id="top5Color" value="#00FF00" title="Top 5 Color">
+                    </div>
                     
-                    <div class="popup-settings">
-                        <label>Subscribe:</label>
-                        <input type="text" id="subscribeText" value="Subscribe!" placeholder="Subscribe text">
+                    <div class="setting-row">
+                        <label>Ranking Object:</label>
+                        <input type="text" id="rankingObject" value="FUNNIEST" placeholder="What you're ranking">
+                        <input type="color" id="objectColor" value="#FFFF00" title="Object Color">
+                    </div>
+                    
+                    <div class="setting-row">
+                        <label>Ending:</label>
+                        <input type="text" id="endingText" value="MOMENTS" placeholder="Ending">
                     </div>
                 </div>
 
                 <h2>Preview</h2>
                 <div class="preview-box">
                     <canvas id="canvas"></canvas>
-                    <video id="hiddenVideo" style="display: none;"></video>
                 </div>
 
                 <div class="controls">
