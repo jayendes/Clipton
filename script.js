@@ -20,15 +20,43 @@ function setupEventListeners() {
         const nameInput = document.getElementById(`name${i}`);
         const magicBtn = document.querySelector(`[data-video="${i}"]`);
         const resSelector = document.getElementById(`res${i}`);
+        const linkInput = document.getElementById(`video${i}-link`);
+        const loadBtn = document.querySelector(`[data-video="${i}"].load-btn`);
         
+        // File input handler
         if (fileInput) fileInput.addEventListener('change', (e) => handleVideoUpload(e, i));
+        
+        // Name input handler
         if (nameInput) nameInput.addEventListener('input', (e) => {
             state.names[i] = e.target.value;
         });
+        
+        // Magic wand button
         if (magicBtn) magicBtn.addEventListener('click', () => enhanceClipName(i));
+        
+        // Resolution selector
         if (resSelector) resSelector.addEventListener('change', (e) => {
             state.resolutions[i] = e.target.value;
         });
+        
+        // Toggle buttons
+        const toggleBtns = document.querySelectorAll(`[data-video="${i}"].toggle-btn`);
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => toggleInputType(i, e.target.dataset.type));
+        });
+        
+        // Load button for links
+        if (loadBtn) loadBtn.addEventListener('click', () => loadVideoFromLink(i));
+        
+        // Link input enter key handler
+        if (linkInput) {
+            linkInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loadVideoFromLink(i);
+                }
+            });
+        }
         
         // Set default resolution
         state.resolutions[i] = 'mobile';
@@ -62,6 +90,113 @@ function handleVideoUpload(event, num) {
         if (statusEl) statusEl.textContent = '❌ Error';
         showMessage('Error loading video ' + num, 'error');
     };
+}
+
+function toggleInputType(videoNum, type) {
+    const fileInput = document.getElementById(`file-input-${videoNum}`);
+    const linkInput = document.getElementById(`link-input-${videoNum}`);
+    const toggleBtns = document.querySelectorAll(`[data-video="${videoNum}"].toggle-btn`);
+    
+    toggleBtns.forEach(btn => {
+        if (btn.dataset.type === type) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    if (type === 'file') {
+        fileInput.style.display = 'block';
+        linkInput.style.display = 'none';
+    } else {
+        fileInput.style.display = 'none';
+        linkInput.style.display = 'flex';
+    }
+}
+
+async function loadVideoFromLink(videoNum) {
+    const linkInput = document.getElementById(`video${videoNum}-link`);
+    const loadBtn = document.querySelector(`[data-video="${videoNum}"].load-btn`);
+    const statusEl = document.getElementById(`status${videoNum}`);
+    
+    const url = linkInput?.value?.trim();
+    if (!url) {
+        showMessage('Please enter a video URL', 'error');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        if (loadBtn) {
+            loadBtn.textContent = 'Loading...';
+            loadBtn.disabled = true;
+        }
+        if (statusEl) statusEl.textContent = '⏳ Loading...';
+        
+        // Create video element and load the URL
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.preload = 'metadata';
+        
+        // Handle different URL types
+        let videoUrl = url;
+        
+        // TikTok/douyin API URLs - use directly as they're already video URLs
+        if (url.includes('musical.ly/aweme/v1/play/') || 
+            url.includes('api2-16-h2.musical.ly') ||
+            url.includes('v.tiktok.com') ||
+            url.includes('tiktok.com/')) {
+            videoUrl = url; // Use the provided URL directly
+        }
+        // YouTube - extract video ID and create embed URL
+        else if (url.includes('youtube.com/watch?v=')) {
+            const videoId = url.split('v=')[1]?.split('&')[0];
+            videoUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+        // YouTube short links
+        else if (url.includes('youtu.be/')) {
+            const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+            videoUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+        
+        // Set video source
+        video.src = videoUrl;
+        
+        // Wait for metadata to load
+        await new Promise((resolve, reject) => {
+            video.onloadedmetadata = resolve;
+            video.onerror = () => reject(new Error('Failed to load video metadata'));
+            
+            // Set timeout
+            setTimeout(() => reject(new Error('Loading timeout')), 15000);
+        });
+        
+        // Store the video
+        state.videos[videoNum] = video;
+        
+        // Update UI
+        if (statusEl) statusEl.textContent = '✓ Loaded from link';
+        showMessage(`Video ${videoNum} loaded from link`, 'success');
+        
+        checkReady();
+        
+    } catch (error) {
+        console.error('Error loading video from link:', error);
+        
+        if (statusEl) statusEl.textContent = '❌ Failed';
+        showMessage(`Failed to load video ${videoNum}: ${error.message}`, 'error');
+        
+        // Auto-detect and suggest CORS proxy for local testing
+        if (error.message.includes('CORS') || error.message.includes('blocked')) {
+            showMessage('Try using a CORS proxy or download the video first', 'info');
+        }
+    } finally {
+        // Reset button
+        if (loadBtn) {
+            loadBtn.textContent = 'Load';
+            loadBtn.disabled = false;
+        }
+    }
 }
 
 function checkReady() {
@@ -185,6 +320,30 @@ async function generateVideo() {
         
         if (!navigator.mediaDevices || !window.MediaRecorder) {
             throw new Error('Browser not supported. Use Chrome, Edge, or Firefox.');
+        }
+        
+        // Preload all videos to ensure they can be played
+        showProgress(5, 'Loading videos...');
+        for (let i = 1; i <= 5; i++) {
+            const video = state.videos[i];
+            if (video) {
+                video.currentTime = 0;
+                video.muted = true;
+                // Ensure video is ready to play
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error(`Video ${i} loading timeout`)), 10000);
+                    
+                    const readyCheck = () => {
+                        if (video.readyState >= 2) { // HAVE_CURRENT_DATA
+                            clearTimeout(timeout);
+                            resolve();
+                        } else {
+                            video.addEventListener('loadeddata', readyCheck, { once: true });
+                        }
+                    };
+                    readyCheck();
+                });
+            }
         }
         
         const mimeType = getSupportedMimeType();

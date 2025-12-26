@@ -98,10 +98,46 @@ h2 {
     color: #fff;
 }
 
-.video-slot input[type="file"] {
+.input-type-toggle {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9em;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.toggle-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.file-input, .link-input {
+    margin-bottom: 10px;
+}
+
+.link-input {
+    display: flex;
+    gap: 5px;
+}
+
+.video-slot input[type="file"], .video-slot input[type="url"] {
     width: 100%;
     padding: 10px;
-    margin-bottom: 10px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
@@ -110,8 +146,36 @@ h2 {
     transition: all 0.3s;
 }
 
-.video-slot input[type="file"]:hover {
-    background: rgba(255, 255, 255, 0.2);
+.video-slot input[type="file"]:hover, .video-slot input[type="url"]:focus {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.video-slot input[type="url"] {
+    cursor: text;
+    flex: 1;
+}
+
+.load-btn {
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.load-btn:hover {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+    transform: translateY(-1px);
+}
+
+.load-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    cursor: not-allowed;
+    transform: none;
 }
 
 .name-input-group {
