@@ -1,0 +1,293 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #2a2a2a;
+    border-radius: 10px;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 1.2em;
+    color: #aaa;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.upload-section, .preview-section {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #4CAF50;
+}
+
+.note {
+    background: #333;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border-left: 3px solid #4CAF50;
+}
+
+.video-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.video-slot {
+    background: #333;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.slot-header {
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.video-slot input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #444;
+    border: 2px solid #555;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.video-slot input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    background: #444;
+    border: 2px solid #555;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1em;
+}
+
+.video-slot input[type="text"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.status {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #4CAF50;
+}
+
+.settings {
+    background: #333;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.settings label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.settings input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    background: #444;
+    border: 2px solid #555;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1em;
+}
+
+.settings input[type="text"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.color-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.color-btn {
+    flex: 1;
+    padding: 10px;
+    border: 3px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.color-btn.red {
+    background: #FF0000;
+    color: #fff;
+}
+
+.color-btn.green {
+    background: #00FF00;
+    color: #000;
+}
+
+.color-btn.yellow {
+    background: #FFFF00;
+    color: #000;
+}
+
+.color-btn.active {
+    border-color: #fff;
+    transform: scale(1.05);
+}
+
+.preview-box {
+    width: 100%;
+    aspect-ratio: 9/16;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+#canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.controls button {
+    flex: 1;
+    padding: 15px;
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.controls button:hover:not(:disabled) {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.controls button:disabled {
+    background: #555;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+#message {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: none;
+}
+
+#message.success {
+    background: #4CAF50;
+    display: block;
+}
+
+#message.error {
+    background: #f44336;
+    display: block;
+}
+
+#message.info {
+    background: #2196F3;
+    display: block;
+}
+
+#progress {
+    margin-top: 10px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #444;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+#progressBar {
+    height: 100%;
+    background: #4CAF50;
+    width: 0%;
+    transition: width 0.3s;
+}
+
+#progressText {
+    text-align: center;
+    color: #aaa;
+}
+
+.instructions {
+    background: #333;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.instructions h3 {
+    margin-bottom: 10px;
+    color: #4CAF50;
+}
+
+.instructions ol {
+    margin-left: 20px;
+}
+
+.instructions li {
+    margin-bottom: 5px;
+}
+
+@media (max-width: 1000px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+}

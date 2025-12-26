@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipton - Top 5 Video Editor</title>
+    <link rel="stylesheet" href="style.css">
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Clipton</h1>
+            <p>Auto-edit your Top 5 videos</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Video Upload Section -->
+            <div class="upload-section">
+                <h2>Upload 5 Videos</h2>
+                <p class="note">Videos will play in order: 2, 3, 4, 5, 1</p>
+                
+                <div class="video-slots">
+                    <div class="video-slot">
+                        <div class="slot-header">
+                            <span>Video #1 (Plays 5th)</span>
+                        </div>
+                        <input type="file" id="video1" accept="video/*">
+                        <input type="text" id="name1" placeholder="Clip name (e.g., Epic Win 🏆)">
+                        <div class="status" id="status1"></div>
+                    </div>
+
+                    <div class="video-slot">
+                        <div class="slot-header">
+                            <span>Video #2 (Plays 1st)</span>
+                        </div>
+                        <input type="file" id="video2" accept="video/*">
+                        <input type="text" id="name2" placeholder="Clip name">
+                        <div class="status" id="status2"></div>
+                    </div>
+
+                    <div class="video-slot">
+                        <div class="slot-header">
+                            <span>Video #3 (Plays 2nd)</span>
+                        </div>
+                        <input type="file" id="video3" accept="video/*">
+                        <input type="text" id="name3" placeholder="Clip name">
+                        <div class="status" id="status3"></div>
+                    </div>
+
+                    <div class="video-slot">
+                        <div class="slot-header">
+                            <span>Video #4 (Plays 3rd)</span>
+                        </div>
+                        <input type="file" id="video4" accept="video/*">
+                        <input type="text" id="name4" placeholder="Clip name">
+                        <div class="status" id="status4"></div>
+                    </div>
+
+                    <div class="video-slot">
+                        <div class="slot-header">
+                            <span>Video #5 (Plays 4th)</span>
+                        </div>
+                        <input type="file" id="video5" accept="video/*">
+                        <input type="text" id="name5" placeholder="Clip name">
+                        <div class="status" id="status5"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings and Preview -->
+            <div class="preview-section">
+                <h2>Title Settings</h2>
+                
+                <div class="settings">
+                    <label>Title:</label>
+                    <input type="text" id="titleText" value="Ranking Top 5 Best" placeholder="e.g., Ranking Top 5 Best">
+                    
+                    <label>Highlight Word:</label>
+                    <input type="text" id="highlightWord" placeholder="e.g., Fall">
+                    
+                    <label>Highlight Color:</label>
+                    <div class="color-buttons">
+                        <button class="color-btn red active" data-color="#FF0000">Red</button>
+                        <button class="color-btn green" data-color="#00FF00">Green</button>
+                        <button class="color-btn yellow" data-color="#FFFF00">Yellow</button>
+                    </div>
+                    
+                    <label>Ending:</label>
+                    <input type="text" id="endingText" value="Moments" placeholder="e.g., Moments">
+                </div>
+
+                <h2>Preview</h2>
+                <div class="preview-box">
+                    <canvas id="canvas"></canvas>
+                    <video id="hiddenVideo" style="display: none;"></video>
+                </div>
+
+                <div class="controls">
+                    <button id="generateBtn" disabled>Generate Video</button>
+                    <button id="downloadBtn" disabled>Download Video</button>
+                </div>
+
+                <div id="message"></div>
+                <div id="progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="progressBar"></div>
+                    </div>
+                    <p id="progressText"></p>
+                </div>
+
+                <div class="instructions">
+                    <h3>How to Use:</h3>
+                    <ol>
+                        <li>Upload 5 video files</li>
+                        <li>Give each clip a name</li>
+                        <li>Customize your title</li>
+                        <li>Click "Generate Video"</li>
+                        <li>Download when ready</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
