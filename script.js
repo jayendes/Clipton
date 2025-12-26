@@ -81,6 +81,47 @@ function hideProgress() {
     document.getElementById('progress').style.display = 'none';
 }
 
+// Get the best supported MIME type for MediaRecorder
+function getSupportedMimeType() {
+    const types = [
+        'video/webm;codecs=vp8',
+        'video/webm;codecs=h264',
+        'video/webm',
+        'video/mp4'
+    ];
+    
+    for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+            return type;
+        }
+    }
+    
+    // Fallback to webm
+    return 'video/webm';
+}
+
+function getFilename() {
+    const titleText = document.getElementById('titleText').value || 'Top 5';
+    const highlightWord = document.getElementById('highlightWord').value;
+    const endingText = document.getElementById('endingText').value || 'Moments';
+    
+    // Build clean filename
+    let filename = titleText.toLowerCase().replace(/\s+/g, '-');
+    if (highlightWord) {
+        filename += '-' + highlightWord.toLowerCase().replace(/\s+/g, '-');
+    }
+    filename += '-' + endingText.toLowerCase().replace(/\s+/g, '-');
+    
+    // Clean up special characters
+    filename = filename.replace(/[^a-z0-9-]/g, '');
+    
+    // Add file extension based on MIME type
+    const mimeType = getSupportedMimeType();
+    const extension = mimeType.includes('mp4') ? '.mp4' : '.webm';
+    
+    return filename + extension;
+}
+
 async function generateVideo() {
     try {
         showMessage('Generating video...', 'info');
@@ -89,9 +130,10 @@ async function generateVideo() {
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Set canvas size (9:16 aspect ratio)
-        canvas.width = 1080;
-        canvas.height = 1920;
+        // Set canvas size for phone resolution (9:16 aspect ratio, common phone sizes)
+        // Common phone resolutions: 1080x1920, 720x1280, 480x854
+        canvas.width = 720;  // Phone width
+        canvas.height = 1280; // Phone height
         
         // Get title settings
         const titleText = document.getElementById('titleText').value || 'Ranking Top 5 Best';
@@ -101,12 +143,16 @@ async function generateVideo() {
         // Play order: 2, 3, 4, 5, 1
         const playOrder = [2, 3, 4, 5, 1];
         
-        // Setup MediaRecorder
+        // Setup MediaRecorder with supported codec
+        const mimeType = getSupportedMimeType();
         const stream = canvas.captureStream(30);
-        const mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'video/webm;codecs=vp9',
-            videoBitsPerSecond: 5000000
-        });
+        
+        const options = {
+            mimeType: mimeType,
+            videoBitsPerSecond: 3000000 // Lower bitrate for smaller file size
+        };
+        
+        const mediaRecorder = new MediaRecorder(stream, options);
         
         const chunks = [];
         mediaRecorder.ondataavailable = (e) => {
@@ -116,8 +162,9 @@ async function generateVideo() {
         };
         
         mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
+            const blob = new Blob(chunks, { type: mimeType });
             state.recordedBlob = blob;
+            state.mimeType = mimeType;
             showMessage('Video generated! Click Download to save.', 'success');
             document.getElementById('downloadBtn').disabled = false;
             hideProgress();
@@ -145,8 +192,30 @@ async function generateVideo() {
                         return;
                     }
                     
-                    // Draw video frame
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    // Draw video frame (fit to canvas while maintaining aspect ratio)
+                    const videoAspect = video.videoWidth / video.videoHeight;
+                    const canvasAspect = canvas.width / canvas.height;
+                    
+                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                    
+                    if (videoAspect > canvasAspect) {
+                        // Video is wider than canvas
+                        drawHeight = canvas.height;
+                        drawWidth = canvas.height * videoAspect;
+                        offsetX = (canvas.width - drawWidth) / 2;
+                    } else {
+                        // Video is taller than canvas
+                        drawWidth = canvas.width;
+                        drawHeight = canvas.width / videoAspect;
+                        offsetY = (canvas.height - drawHeight) / 2;
+                    }
+                    
+                    // Clear canvas
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw video
+                    ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
                     
                     // Draw overlays
                     drawOverlays(ctx, canvas.width, canvas.height, titleText, highlightWord, endingText, videoNum);
@@ -176,14 +245,19 @@ async function generateVideo() {
 }
 
 function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, currentVideo) {
+    // Scale font sizes for phone resolution
+    const titleFontSize = Math.floor(width * 0.065); // ~47px for 720px width
+    const numberFontSize = Math.floor(width * 0.083); // ~60px for 720px width
+    const nameFontSize = Math.floor(width * 0.046); // ~33px for 720px width
+    
     // Draw title
-    ctx.font = 'bold 70px Arial';
+    ctx.font = `bold ${titleFontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 6;
+    ctx.lineWidth = Math.floor(titleFontSize * 0.08); // ~4px
     ctx.fillStyle = '#FFF';
     
-    const titleY = 100;
+    const titleY = height * 0.08; // 8% from top
     
     // Build full title
     let fullTitle = titleText;
@@ -231,25 +305,29 @@ function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, 
     }
     
     // Draw numbers 1-5
-    ctx.font = 'bold 90px Arial';
+    ctx.font = `bold ${numberFontSize}px Arial`;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFF';
     
-    let numberY = 300;
+    let numberY = height * 0.25; // 25% from top
+    const numberX = width * 0.07; // 7% from left
+    const nameX = width * 0.25; // 25% from left
+    const numberSpacing = height * 0.14; // 14% spacing
+    
     for (let i = 1; i <= 5; i++) {
         const numberText = `${i}.`;
-        ctx.strokeText(numberText, 50, numberY);
-        ctx.fillText(numberText, 50, numberY);
+        ctx.strokeText(numberText, numberX, numberY);
+        ctx.fillText(numberText, numberX, numberY);
         
         // Draw clip name if this is the current video
         if (i === currentVideo && state.names[i]) {
-            ctx.font = 'bold 50px Arial';
-            ctx.strokeText(state.names[i], 180, numberY);
-            ctx.fillText(state.names[i], 180, numberY);
-            ctx.font = 'bold 90px Arial';
+            ctx.font = `bold ${nameFontSize}px Arial`;
+            ctx.strokeText(state.names[i], nameX, numberY);
+            ctx.fillText(state.names[i], nameX, numberY);
+            ctx.font = `bold ${numberFontSize}px Arial`;
         }
         
-        numberY += 180;
+        numberY += numberSpacing;
     }
 }
 
@@ -262,7 +340,7 @@ function downloadVideo() {
     const url = URL.createObjectURL(state.recordedBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'clipton-video-' + Date.now() + '.webm';
+    a.download = getFilename();
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
