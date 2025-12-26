@@ -11,14 +11,12 @@
     <div class="container">
         <header>
             <h1>🎬 Clipton</h1>
-            <p>Auto-edit your Top 5 videos</p>
         </header>
 
         <div class="main-content">
             <!-- Video Upload Section -->
             <div class="upload-section">
                 <h2>Upload 5 Videos</h2>
-                <p class="note">Videos will play in order: 2, 3, 4, 5, 1</p>
                 
                 <div class="video-slots">
                     <div class="video-slot">
@@ -26,7 +24,10 @@
                             <span>Video Rank #1</span>
                         </div>
                         <input type="file" id="video1" accept="video/*">
-                        <input type="text" id="name1" placeholder="Clip name (e.g., Epic Win 🏆)">
+                        <div class="name-input-group">
+                            <input type="text" id="name1" placeholder="Clip name">
+                            <button class="magic-btn" data-video="1">🪄</button>
+                        </div>
                         <div class="status" id="status1"></div>
                     </div>
 
@@ -35,7 +36,10 @@
                             <span>Video Rank #2</span>
                         </div>
                         <input type="file" id="video2" accept="video/*">
-                        <input type="text" id="name2" placeholder="Clip name">
+                        <div class="name-input-group">
+                            <input type="text" id="name2" placeholder="Clip name">
+                            <button class="magic-btn" data-video="2">🪄</button>
+                        </div>
                         <div class="status" id="status2"></div>
                     </div>
 
@@ -44,7 +48,10 @@
                             <span>Video Rank #3</span>
                         </div>
                         <input type="file" id="video3" accept="video/*">
-                        <input type="text" id="name3" placeholder="Clip name">
+                        <div class="name-input-group">
+                            <input type="text" id="name3" placeholder="Clip name">
+                            <button class="magic-btn" data-video="3">🪄</button>
+                        </div>
                         <div class="status" id="status3"></div>
                     </div>
 
@@ -53,7 +60,10 @@
                             <span>Video Rank #4</span>
                         </div>
                         <input type="file" id="video4" accept="video/*">
-                        <input type="text" id="name4" placeholder="Clip name">
+                        <div class="name-input-group">
+                            <input type="text" id="name4" placeholder="Clip name">
+                            <button class="magic-btn" data-video="4">🪄</button>
+                        </div>
                         <div class="status" id="status4"></div>
                     </div>
 
@@ -62,7 +72,10 @@
                             <span>Video Rank #5</span>
                         </div>
                         <input type="file" id="video5" accept="video/*">
-                        <input type="text" id="name5" placeholder="Clip name">
+                        <div class="name-input-group">
+                            <input type="text" id="name5" placeholder="Clip name">
+                            <button class="magic-btn" data-video="5">🪄</button>
+                        </div>
                         <div class="status" id="status5"></div>
                     </div>
                 </div>
@@ -70,16 +83,16 @@
 
             <!-- Settings and Preview -->
             <div class="preview-section">
-                <h2>Title Settings</h2>
+                <h2>Settings</h2>
                 
                 <div class="settings">
                     <label>Title:</label>
-                    <input type="text" id="titleText" value="Ranking Top 5 Best" placeholder="e.g., Ranking Top 5 Best">
+                    <input type="text" id="titleText" value="Ranking Top 5 Best" placeholder="Title">
                     
-                    <label>Highlight Word:</label>
-                    <input type="text" id="highlightWord" placeholder="e.g., Fall">
+                    <label>Highlight:</label>
+                    <input type="text" id="highlightWord" placeholder="Highlight word">
                     
-                    <label>Highlight Color:</label>
+                    <label>Color:</label>
                     <div class="color-buttons">
                         <button class="color-btn red active" data-color="#FF0000">Red</button>
                         <button class="color-btn green" data-color="#00FF00">Green</button>
@@ -87,11 +100,11 @@
                     </div>
                     
                     <label>Ending:</label>
-                    <input type="text" id="endingText" value="Moments" placeholder="e.g., Moments">
+                    <input type="text" id="endingText" value="Moments" placeholder="Ending text">
                     
                     <div class="popup-settings">
-                        <label>Subscribe Text:</label>
-                        <input type="text" id="subscribeText" value="Subscribe for more!" placeholder="Subscribe text">
+                        <label>Subscribe:</label>
+                        <input type="text" id="subscribeText" value="Subscribe!" placeholder="Subscribe text">
                     </div>
                 </div>
 
@@ -99,12 +112,11 @@
                 <div class="preview-box">
                     <canvas id="canvas"></canvas>
                     <video id="hiddenVideo" style="display: none;"></video>
-                    <p class="resolution-info">Output: 720x1280 (Phone Resolution) - YouTube Ready</p>
                 </div>
 
                 <div class="controls">
-                    <button id="generateBtn" disabled>Generate Video</button>
-                    <button id="downloadBtn" disabled>Download Video</button>
+                    <button id="generateBtn" disabled>Generate</button>
+                    <button id="downloadBtn" disabled>Download</button>
                 </div>
 
                 <div id="message"></div>
@@ -113,18 +125,6 @@
                         <div id="progressBar"></div>
                     </div>
                     <p id="progressText"></p>
-                </div>
-
-                <div class="instructions">
-                    <h3>How to Use:</h3>
-                    <ol>
-                        <li>Upload 5 video files</li>
-                        <li>Give each clip a name</li>
-                        <li>Customize your title</li>
-                        <li>Set subscribe popup text</li>
-                        <li>Click "Generate Video"</li>
-                        <li>Download MP4 for YouTube</li>
-                    </ol>
                 </div>
             </div>
         </div>

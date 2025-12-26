@@ -88,14 +88,38 @@ h2 {
     cursor: pointer;
 }
 
+.name-input-group {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
 .video-slot input[type="text"] {
-    width: 100%;
+    flex: 1;
     padding: 10px;
     background: #444;
     border: 2px solid #555;
     border-radius: 5px;
     color: #fff;
     font-size: 1em;
+}
+
+.magic-btn {
+    padding: 10px;
+    background: #667eea;
+    border: 2px solid #555;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: all 0.2s;
+    min-width: 45px;
+}
+
+.magic-btn:hover {
+    background: #5568d3;
+    transform: scale(1.1);
 }
 
 .video-slot input[type="text"]:focus {
@@ -197,12 +221,7 @@ h2 {
     background: #000;
 }
 
-.resolution-info {
-    text-align: center;
-    color: #888;
-    font-size: 0.9em;
-    margin-top: 5px;
-}
+/* Resolution info removed */
 
 .controls {
     display: flex;
@@ -281,25 +300,7 @@ h2 {
     color: #aaa;
 }
 
-.instructions {
-    background: #333;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-.instructions h3 {
-    margin-bottom: 10px;
-    color: #4CAF50;
-}
-
-.instructions ol {
-    margin-left: 20px;
-}
-
-.instructions li {
-    margin-bottom: 5px;
-}
+/* Instructions removed */
 
 @media (max-width: 1000px) {
     .main-content {

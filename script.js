@@ -19,11 +19,14 @@ function setupEventListeners() {
     for (let i = 1; i <= 5; i++) {
         const fileInput = document.getElementById(`video${i}`);
         const nameInput = document.getElementById(`name${i}`);
+        const magicBtn = document.querySelector(`[data-video="${i}"]`);
         
         fileInput.addEventListener('change', (e) => handleVideoUpload(e, i));
         nameInput.addEventListener('input', (e) => {
             state.names[i] = e.target.value;
         });
+        
+        magicBtn.addEventListener('click', (e) => enhanceClipName(i));
     }
     
     // Color buttons
@@ -39,14 +42,15 @@ function setupEventListeners() {
             e.target.classList.add('active');
             e.target.style.borderColor = '#fff';
             state.highlightColor = e.target.dataset.color;
-            
-            console.log('Highlight color set to:', state.highlightColor);
         });
     });
     
     // Generate and download buttons
-    document.getElementById('generateBtn').addEventListener('click', generateVideo);
-    document.getElementById('downloadBtn').addEventListener('click', downloadVideo);
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    
+    if (generateBtn) generateBtn.addEventListener('click', generateVideo);
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadVideo);
 }
 
 function handleVideoUpload(event, num) {
@@ -98,35 +102,117 @@ function hideProgress() {
     document.getElementById('progress').style.display = 'none';
 }
 
-// Get the best supported MIME type for MediaRecorder (prefer MP4 for YouTube)
+// Magic wand functionality - enhance clip names with emojis and better formatting
+function enhanceClipName(videoNum) {
+    const nameInput = document.getElementById(`name${videoNum}`);
+    if (!nameInput) return;
+    
+    const currentName = nameInput.value.trim();
+    if (!currentName) return;
+    
+    const lowerName = currentName.toLowerCase();
+    let enhancedName = currentName;
+    
+    // Common keywords and their enhanced versions
+    const enhancements = {
+        dunk: 'Slam Dunk 🏀',
+        slam: 'Slam 🏀',
+        shot: 'Amazing Shot 🎯',
+        goal: 'Epic Goal ⚽',
+        score: 'Perfect Score 🎯',
+        win: 'Victory 🏆',
+        victory: 'Victory 🏆',
+        fail: 'Epic Fail 😂',
+        funny: 'Hilarious 😂',
+        lol: 'LOL 😂',
+        kill: 'Epic Kill 💀',
+        eliminate: 'Eliminated 💀',
+        trick: 'Insane Trick 🎪',
+        amazing: 'Amazing ✨',
+        cool: 'Cool 😎',
+        awesome: 'Awesome 🔥',
+        fire: 'Fire 🔥',
+        lit: 'Lit 🔥',
+        clutch: 'Clutch Play ⚡',
+        epic: 'Epic 🌟',
+        crazy: 'Crazy 🤪',
+        insane: 'Insane 🤪',
+        perfect: 'Perfect 💯',
+        best: 'The Best 👑',
+        first: 'First Place 🥇',
+        second: 'Second Place 🥈',
+        third: 'Third Place 🥉',
+        lucky: 'Lucky 🍀',
+        unlucky: 'Unlucky 💀',
+        rage: 'Rage 😡',
+        angry: 'Angry 😡',
+        happy: 'Happy 😊',
+        sad: 'Sad 😢',
+        wow: 'Wow 😮',
+        omg: 'OMG 😮',
+        nice: 'Nice! 👍',
+        good: 'Good! 👍',
+        great: 'Great! 🎉',
+        perfect: 'Perfect! 💯'
+    };
+    
+    // Check for keywords and enhance
+    for (const [keyword, enhanced] of Object.entries(enhancements)) {
+        if (lowerName.includes(keyword)) {
+            enhancedName = enhanced;
+            break;
+        }
+    }
+    
+    // If no specific match, add general enhancement
+    if (enhancedName === currentName) {
+        if (lowerName.includes('video')) {
+            enhancedName = currentName.replace(/video/i, 'Video 📹');
+        } else if (lowerName.includes('clip')) {
+            enhancedName = currentName.replace(/clip/i, 'Clip 🎬');
+        } else if (lowerName.includes('moment')) {
+            enhancedName = currentName.replace(/moment/i, 'Moment 📸');
+        } else {
+            // Add a random positive emoji
+            const emojis = ['🔥', '✨', '💯', '🎯', '🏆', '⚡', '🌟'];
+            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            enhancedName = currentName.charAt(0).toUpperCase() + currentName.slice(1) + ' ' + randomEmoji;
+        }
+    }
+    
+    nameInput.value = enhancedName;
+    state.names[videoNum] = enhancedName;
+}
+
+// Get the best supported MIME type for MediaRecorder (optimized for Firefox compatibility)
 function getSupportedMimeType() {
-    // Test in order of preference (MP4 first for YouTube compatibility)
+    // Optimized order for better Firefox support
     const types = [
-        'video/mp4;codecs=h264',
-        'video/mp4',
-        'video/webm;codecs=vp9,opus',
-        'video/webm;codecs=vp8,opus',
-        'video/webm;codecs=vp9',
         'video/webm;codecs=vp8',
-        'video/webm'
+        'video/webm',
+        'video/webm;codecs=vp9',
+        'video/mp4;codecs=h264',
+        'video/mp4'
     ];
     
     for (const type of types) {
         if (MediaRecorder.isTypeSupported(type)) {
-            console.log('Using codec:', type);
             return type;
         }
     }
     
-    // Last resort - try without any codec spec
-    console.log('Using fallback: video/webm');
+    // Last resort
     return 'video/webm';
 }
 
 function getFilename() {
-    const titleText = document.getElementById('titleText').value || 'Top 5';
-    const highlightWord = document.getElementById('highlightWord').value;
-    const endingText = document.getElementById('endingText').value || 'Moments';
+    const titleElement = document.getElementById('titleText');
+    const highlightElement = document.getElementById('highlightWord');
+    const endingElement = document.getElementById('endingText');
+    
+    const titleText = (titleElement && titleElement.value) || 'Top 5';
+    const highlightWord = (highlightElement && highlightElement.value) || '';
+    const endingText = (endingElement && endingElement.value) || 'Moments';
     
     // Build clean filename
     let filename = titleText.toLowerCase().replace(/\s+/g, '-');
@@ -167,35 +253,39 @@ async function generateVideo() {
         canvas.width = 720;  // Phone width
         canvas.height = 1280; // Phone height
         
-        // Get title settings
-        const titleText = document.getElementById('titleText').value || 'Ranking Top 5 Best';
-        const highlightWord = document.getElementById('highlightWord').value;
-        const endingText = document.getElementById('endingText').value || 'Moments';
-        const subscribeText = document.getElementById('subscribeText').value || 'Subscribe for more!';
+        // Get title settings with null checks
+        const titleElement = document.getElementById('titleText');
+        const highlightElement = document.getElementById('highlightWord');
+        const endingElement = document.getElementById('endingText');
+        const subscribeElement = document.getElementById('subscribeText');
+        
+        const titleText = (titleElement && titleElement.value) || 'Ranking Top 5 Best';
+        const highlightWord = (highlightElement && highlightElement.value) || '';
+        const endingText = (endingElement && endingElement.value) || 'Moments';
+        const subscribeText = (subscribeElement && subscribeElement.value) || 'Subscribe for more!';
         
         // Play order: 2, 3, 4, 5, 1
         const playOrder = [2, 3, 4, 5, 1];
         
-        // Setup MediaRecorder with supported codec
-        const stream = canvas.captureStream(30);
+        // Setup MediaRecorder with supported codec (optimized for Firefox)
+        const stream = canvas.captureStream(25); // Lower framerate for better compatibility
         
         let options = {
             mimeType: mimeType,
-            videoBitsPerSecond: 3000000 // Higher bitrate for better quality
+            videoBitsPerSecond: 2000000 // Lower bitrate for better compatibility
         };
         
-        // Try to create MediaRecorder with options
+        // Try to create MediaRecorder with options (Firefox-friendly approach)
         let mediaRecorder;
         try {
             mediaRecorder = new MediaRecorder(stream, options);
         } catch (e) {
-            console.log('Falling back to default options');
-            // Try without mimeType
             try {
-                options = { videoBitsPerSecond: 3000000 };
+                // Try without mimeType for Firefox
+                options = { videoBitsPerSecond: 2000000 };
                 mediaRecorder = new MediaRecorder(stream, options);
             } catch (e2) {
-                console.log('Falling back to no options');
+                // Final fallback
                 mediaRecorder = new MediaRecorder(stream);
             }
         }
@@ -559,9 +649,11 @@ function downloadVideo() {
             
             // Clean up
             setTimeout(() => {
-                document.body.removeChild(a);
+                if (document.body.contains(a)) {
+                    document.body.removeChild(a);
+                }
                 URL.revokeObjectURL(url);
-                showMessage('✅ Video downloaded successfully! Ready for YouTube upload!', 'success');
+                showMessage('✅ Video downloaded!', 'success');
             }, 100);
         }, 100);
         
