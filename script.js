@@ -3,7 +3,8 @@ const state = {
     videos: {},
     names: {},
     highlightColor: '#FF0000',
-    recordedBlob: null
+    recordedBlob: null,
+    mimeType: 'video/webm'
 };
 
 // Initialize
@@ -50,6 +51,11 @@ function handleVideoUpload(event, num) {
         document.getElementById(`status${num}`).textContent = '✓ Loaded';
         checkReady();
     };
+    
+    video.onerror = () => {
+        document.getElementById(`status${num}`).textContent = '❌ Error loading video';
+        showMessage('Error loading video ' + num, 'error');
+    };
 }
 
 function checkReady() {
@@ -83,20 +89,26 @@ function hideProgress() {
 
 // Get the best supported MIME type for MediaRecorder
 function getSupportedMimeType() {
+    // Test in order of preference
     const types = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=vp9',
         'video/webm;codecs=vp8',
-        'video/webm;codecs=h264',
         'video/webm',
+        'video/mp4;codecs=h264',
         'video/mp4'
     ];
     
     for (const type of types) {
         if (MediaRecorder.isTypeSupported(type)) {
+            console.log('Using codec:', type);
             return type;
         }
     }
     
-    // Fallback to webm
+    // Last resort - try without any codec spec
+    console.log('Using fallback: video/webm');
     return 'video/webm';
 }
 
@@ -116,22 +128,29 @@ function getFilename() {
     filename = filename.replace(/[^a-z0-9-]/g, '');
     
     // Add file extension based on MIME type
-    const mimeType = getSupportedMimeType();
-    const extension = mimeType.includes('mp4') ? '.mp4' : '.webm';
+    const extension = state.mimeType.includes('mp4') ? '.mp4' : '.webm';
     
     return filename + extension;
 }
 
 async function generateVideo() {
     try {
-        showMessage('Generating video...', 'info');
-        showProgress(0, 'Starting...');
+        showMessage('Preparing video generation...', 'info');
+        showProgress(0, 'Initializing...');
+        
+        // Check browser compatibility
+        if (!navigator.mediaDevices || !window.MediaRecorder) {
+            throw new Error('Your browser does not support video recording. Please try Chrome, Edge, or Firefox.');
+        }
+        
+        // Get supported MIME type
+        const mimeType = getSupportedMimeType();
+        state.mimeType = mimeType;
         
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Set canvas size for phone resolution (9:16 aspect ratio, common phone sizes)
-        // Common phone resolutions: 1080x1920, 720x1280, 480x854
+        // Set canvas size for phone resolution (9:16 aspect ratio)
         canvas.width = 720;  // Phone width
         canvas.height = 1280; // Phone height
         
@@ -144,13 +163,20 @@ async function generateVideo() {
         const playOrder = [2, 3, 4, 5, 1];
         
         // Setup MediaRecorder with supported codec
-        const mimeType = getSupportedMimeType();
         const stream = canvas.captureStream(30);
         
         const options = {
             mimeType: mimeType,
-            videoBitsPerSecond: 3000000 // Lower bitrate for smaller file size
+            videoBitsPerSecond: 2500000 // Lower bitrate for compatibility
         };
+        
+        // Remove mimeType if it's not supported
+        try {
+            const mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e) {
+            console.log('Falling back to default options');
+            delete options.mimeType;
+        }
         
         const mediaRecorder = new MediaRecorder(stream, options);
         
@@ -161,61 +187,91 @@ async function generateVideo() {
             }
         };
         
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: mimeType });
-            state.recordedBlob = blob;
-            state.mimeType = mimeType;
-            showMessage('Video generated! Click Download to save.', 'success');
-            document.getElementById('downloadBtn').disabled = false;
-            hideProgress();
+        mediaRecorder.onerror = (e) => {
+            console.error('MediaRecorder error:', e);
+            throw new Error('Recording failed: ' + e.error);
         };
         
-        mediaRecorder.start();
+        mediaRecorder.onstop = () => {
+            try {
+                const blob = new Blob(chunks, { type: mimeType });
+                state.recordedBlob = blob;
+                showMessage('Video generated successfully! Click Download to save.', 'success');
+                document.getElementById('downloadBtn').disabled = false;
+                hideProgress();
+            } catch (error) {
+                throw new Error('Failed to create video file: ' + error.message);
+            }
+        };
+        
+        mediaRecorder.start(100); // Collect data every 100ms
         showProgress(10, 'Recording started...');
+        
+        // Add a small delay to ensure recording is active
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Process each video in order
         for (let i = 0; i < playOrder.length; i++) {
             const videoNum = playOrder[i];
             const video = state.videos[videoNum];
             
+            if (!video) {
+                throw new Error(`Video ${videoNum} is not loaded properly`);
+            }
+            
             showProgress(20 + (i * 15), `Processing video ${i + 1} of 5...`);
             
             // Reset and play video
             video.currentTime = 0;
-            await video.play();
+            video.muted = true;
+            
+            try {
+                await video.play();
+            } catch (e) {
+                throw new Error(`Failed to play video ${videoNum}: ${e.message}`);
+            }
             
             // Render frames
             await new Promise((resolve) => {
+                let frameCount = 0;
+                const maxFrames = 300; // Limit to prevent infinite loop
+                
                 const renderFrame = () => {
-                    if (video.ended || video.paused) {
+                    frameCount++;
+                    
+                    if (video.ended || video.paused || frameCount > maxFrames) {
                         resolve();
                         return;
                     }
                     
-                    // Draw video frame (fit to canvas while maintaining aspect ratio)
-                    const videoAspect = video.videoWidth / video.videoHeight;
-                    const canvasAspect = canvas.width / canvas.height;
-                    
-                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-                    
-                    if (videoAspect > canvasAspect) {
-                        // Video is wider than canvas
-                        drawHeight = canvas.height;
-                        drawWidth = canvas.height * videoAspect;
-                        offsetX = (canvas.width - drawWidth) / 2;
-                    } else {
-                        // Video is taller than canvas
-                        drawWidth = canvas.width;
-                        drawHeight = canvas.width / videoAspect;
-                        offsetY = (canvas.height - drawHeight) / 2;
-                    }
-                    
-                    // Clear canvas
+                    // Draw background
                     ctx.fillStyle = '#000';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    // Draw video
-                    ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+                    // Draw video frame (fit to canvas while maintaining aspect ratio)
+                    try {
+                        const videoAspect = video.videoWidth / video.videoHeight;
+                        const canvasAspect = canvas.width / canvas.height;
+                        
+                        let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                        
+                        if (videoAspect > canvasAspect) {
+                            // Video is wider than canvas
+                            drawHeight = canvas.height;
+                            drawWidth = canvas.height * videoAspect;
+                            offsetX = (canvas.width - drawWidth) / 2;
+                        } else {
+                            // Video is taller than canvas
+                            drawWidth = canvas.width;
+                            drawHeight = canvas.width / videoAspect;
+                            offsetY = (canvas.height - drawHeight) / 2;
+                        }
+                        
+                        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+                    } catch (e) {
+                        // If video fails to draw, just show background
+                        console.warn('Failed to draw video frame:', e);
+                    }
                     
                     // Draw overlays
                     drawOverlays(ctx, canvas.width, canvas.height, titleText, highlightWord, endingText, videoNum);
@@ -229,17 +285,15 @@ async function generateVideo() {
             video.pause();
         }
         
-        showProgress(95, 'Finalizing...');
+        showProgress(95, 'Finalizing video...');
         
-        // Stop recording after a short delay
-        setTimeout(() => {
-            mediaRecorder.stop();
-            showProgress(100, 'Complete!');
-        }, 500);
+        // Stop recording
+        mediaRecorder.stop();
+        showProgress(100, 'Complete!');
         
     } catch (error) {
         console.error('Error:', error);
-        showMessage('Error generating video: ' + error.message, 'error');
+        showMessage('Error: ' + error.message, 'error');
         hideProgress();
     }
 }
@@ -337,14 +391,18 @@ function downloadVideo() {
         return;
     }
     
-    const url = URL.createObjectURL(state.recordedBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = getFilename();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showMessage('Video downloaded!', 'success');
+    try {
+        const url = URL.createObjectURL(state.recordedBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = getFilename();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showMessage('Video downloaded successfully!', 'success');
+    } catch (error) {
+        showMessage('Download failed: ' + error.message, 'error');
+    }
 }
