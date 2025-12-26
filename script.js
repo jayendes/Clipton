@@ -96,8 +96,13 @@ function handleVideoUpload(event, videoNum) {
     const file = event.target.files[0];
     const statusEl = document.getElementById(`status${videoNum}`);
     
-    if (!file) return;
+    if (!file) {
+        console.log(`No file selected for video ${videoNum}`);
+        return;
+    }
 
+    console.log(`Loading video ${videoNum}:`, file.name, file.type, file.size);
+    
     try {
         showMessage(`Loading video ${videoNum}...`, 'info');
         if (statusEl) statusEl.textContent = '⏳ Loading...';
@@ -106,7 +111,19 @@ function handleVideoUpload(event, videoNum) {
         video.preload = 'metadata';
         video.src = URL.createObjectURL(file);
 
+        // Add timeout for metadata loading
+        const timeout = setTimeout(() => {
+            console.error(`Video ${videoNum} metadata loading timeout`);
+            if (statusEl) statusEl.textContent = '❌ Timeout';
+            showMessage(`Video ${videoNum} loading timeout`, 'error');
+            URL.revokeObjectURL(video.src);
+        }, 10000);
+
         video.onloadedmetadata = () => {
+            clearTimeout(timeout);
+            console.log(`Video ${videoNum} metadata loaded successfully`);
+            console.log(`Video dimensions: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+            
             state.videos[videoNum] = video;
             
             if (statusEl) statusEl.textContent = '✅ Loaded';
@@ -114,15 +131,18 @@ function handleVideoUpload(event, videoNum) {
             checkReady();
         };
 
-        video.onerror = () => {
+        video.onerror = (e) => {
+            clearTimeout(timeout);
+            console.error(`Video ${videoNum} error:`, e);
             if (statusEl) statusEl.textContent = '❌ Failed';
             showMessage(`Failed to load video ${videoNum}`, 'error');
+            URL.revokeObjectURL(video.src);
         };
 
     } catch (error) {
         console.error('Error handling video upload:', error);
         if (statusEl) statusEl.textContent = '❌ Error';
-        showMessage(`Error loading video ${videoNum}`, 'error');
+        showMessage(`Error loading video ${videoNum}: ${error.message}`, 'error');
     }
 }
 
@@ -167,6 +187,8 @@ async function generateVideo() {
 
     try {
         state.isGenerating = true;
+        console.log('Starting video generation...');
+        console.log('Loaded videos:', Object.keys(state.videos));
         showMessage('Starting video generation...', 'info');
 
         // Get title settings
@@ -218,7 +240,10 @@ async function generateVideo() {
             const videoNum = videoOrder[i];
             const video = state.videos[videoNum];
             
+            console.log(`Processing video ${videoNum} (index ${i})`);
+            
             if (!video) {
+                console.error(`Video ${videoNum} not found in state.videos:`, Object.keys(state.videos));
                 throw new Error(`Video ${videoNum} not loaded`);
             }
             
