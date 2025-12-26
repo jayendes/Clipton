@@ -27,16 +27,8 @@
                                 <option value="pc">PC</option>
                             </select>
                         </div>
-                        <div class="input-type-toggle">
-                            <button class="toggle-btn active" data-video="1" data-type="file">📁 File</button>
-                            <button class="toggle-btn" data-video="1" data-type="link">🔗 Link</button>
-                        </div>
-                        <div class="file-input" id="file-input-1">
+                        <div class="file-input">
                             <input type="file" id="video1" accept="video/*">
-                        </div>
-                        <div class="link-input" id="link-input-1" style="display: none;">
-                            <input type="url" id="video1-link" placeholder="Video URL (TikTok, YouTube, etc.)">
-                            <button class="load-btn" data-video="1">Load</button>
                         </div>
                         <div class="name-input-group">
                             <input type="text" id="name1" placeholder="Clip name">
@@ -53,16 +45,8 @@
                                 <option value="pc">PC</option>
                             </select>
                         </div>
-                        <div class="input-type-toggle">
-                            <button class="toggle-btn active" data-video="2" data-type="file">📁 File</button>
-                            <button class="toggle-btn" data-video="2" data-type="link">🔗 Link</button>
-                        </div>
-                        <div class="file-input" id="file-input-2">
+                        <div class="file-input">
                             <input type="file" id="video2" accept="video/*">
-                        </div>
-                        <div class="link-input" id="link-input-2" style="display: none;">
-                            <input type="url" id="video2-link" placeholder="Video URL (TikTok, YouTube, etc.)">
-                            <button class="load-btn" data-video="2">Load</button>
                         </div>
                         <div class="name-input-group">
                             <input type="text" id="name2" placeholder="Clip name">
@@ -79,16 +63,8 @@
                                 <option value="pc">PC</option>
                             </select>
                         </div>
-                        <div class="input-type-toggle">
-                            <button class="toggle-btn active" data-video="3" data-type="file">📁 File</button>
-                            <button class="toggle-btn" data-video="3" data-type="link">🔗 Link</button>
-                        </div>
-                        <div class="file-input" id="file-input-3">
+                        <div class="file-input">
                             <input type="file" id="video3" accept="video/*">
-                        </div>
-                        <div class="link-input" id="link-input-3" style="display: none;">
-                            <input type="url" id="video3-link" placeholder="Video URL (TikTok, YouTube, etc.)">
-                            <button class="load-btn" data-video="3">Load</button>
                         </div>
                         <div class="name-input-group">
                             <input type="text" id="name3" placeholder="Clip name">
@@ -105,16 +81,8 @@
                                 <option value="pc">PC</option>
                             </select>
                         </div>
-                        <div class="input-type-toggle">
-                            <button class="toggle-btn active" data-video="4" data-type="file">📁 File</button>
-                            <button class="toggle-btn" data-video="4" data-type="link">🔗 Link</button>
-                        </div>
-                        <div class="file-input" id="file-input-4">
+                        <div class="file-input">
                             <input type="file" id="video4" accept="video/*">
-                        </div>
-                        <div class="link-input" id="link-input-4" style="display: none;">
-                            <input type="url" id="video4-link" placeholder="Video URL (TikTok, YouTube, etc.)">
-                            <button class="load-btn" data-video="4">Load</button>
                         </div>
                         <div class="name-input-group">
                             <input type="text" id="name4" placeholder="Clip name">
@@ -131,16 +99,8 @@
                                 <option value="pc">PC</option>
                             </select>
                         </div>
-                        <div class="input-type-toggle">
-                            <button class="toggle-btn active" data-video="5" data-type="file">📁 File</button>
-                            <button class="toggle-btn" data-video="5" data-type="link">🔗 Link</button>
-                        </div>
-                        <div class="file-input" id="file-input-5">
+                        <div class="file-input">
                             <input type="file" id="video5" accept="video/*">
-                        </div>
-                        <div class="link-input" id="link-input-5" style="display: none;">
-                            <input type="url" id="video5-link" placeholder="Video URL (TikTok, YouTube, etc.)">
-                            <button class="load-btn" data-video="5">Load</button>
                         </div>
                         <div class="name-input-group">
                             <input type="text" id="name5" placeholder="Clip name">
@@ -151,52 +111,36 @@
                 </div>
             </div>
 
-            <!-- Settings and Preview -->
-            <div class="preview-section">
-                <h2>Settings</h2>
-                
-                <div class="settings">
-                    <div class="setting-row">
-                        <label>Title:</label>
-                        <input type="text" id="titleText" value="Ranking" placeholder="Title">
-                    </div>
-                    
-                    <div class="setting-row">
-                        <label>Top 5 Text:</label>
-                        <input type="text" id="top5Text" value="TOP 5" placeholder="TOP 5">
-                        <input type="color" id="top5Color" value="#00FF00" title="Top 5 Color">
-                    </div>
-                    
-                    <div class="setting-row">
-                        <label>Ranking Object:</label>
-                        <input type="text" id="rankingObject" value="FUNNIEST" placeholder="What you're ranking">
-                        <input type="color" id="objectColor" value="#FFFF00" title="Object Color">
-                    </div>
-                    
-                    <div class="setting-row">
-                        <label>Ending:</label>
-                        <input type="text" id="endingText" value="MOMENTS" placeholder="Ending">
-                    </div>
-                </div>
-
-                <h2>Preview</h2>
-                <div class="preview-box">
-                    <canvas id="canvas"></canvas>
-                </div>
-
-                <div class="controls">
-                    <button id="generateBtn" disabled>Generate</button>
-                    <button id="downloadBtn" disabled>Download</button>
-                </div>
-
-                <div id="message"></div>
-                <div id="progress" style="display: none;">
-                    <div class="progress-bar">
-                        <div id="progressBar"></div>
-                    </div>
-                    <p id="progressText"></p>
+            <!-- Title Section -->
+            <div class="title-section">
+                <h2>Title</h2>
+                <div class="title-inputs">
+                    <input type="text" id="titleText" placeholder="Title" value="Best">
+                    <input type="text" id="top5Text" placeholder="TOP 5" value="TOP 5">
+                    <input type="color" id="top5Color" value="#FF0000" title="TOP 5 Color">
+                    <input type="text" id="rankingObject" placeholder="Ranking" value="Moments">
+                    <input type="color" id="objectColor" value="#FFD700" title="Ranking Color">
+                    <input type="text" id="endingText" placeholder="Ending" value="Ever">
                 </div>
             </div>
+
+            <!-- Subscribe Button Section -->
+            <div class="subscribe-section">
+                <h2>Subscribe Button</h2>
+                <input type="text" id="subscribeText" placeholder="Subscribe text" value="Subscribe for more!">
+            </div>
+
+            <!-- Generate Section -->
+            <div class="generate-section">
+                <button id="generateBtn" disabled>🎬 Generate Video</button>
+                <div id="progress" class="progress" style="display: none;">
+                    <div id="progressBar" class="progress-bar"></div>
+                    <div id="progressText">Processing...</div>
+                </div>
+                <button id="downloadBtn" style="display: none;">⬇️ Download Video</button>
+            </div>
+
+            <div id="message" class="message"></div>
         </div>
     </div>
 

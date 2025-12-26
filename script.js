@@ -1,201 +1,128 @@
-// State management
 const state = {
     videos: {},
-    names: {},
     resolutions: {},
+    names: {},
     processedVideos: new Set(),
     recordedBlob: null,
-    mimeType: 'video/webm'
+    isGenerating: false
 };
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    setupEventListeners();
+    initializeApp();
 });
 
-function setupEventListeners() {
-    // Video uploads and settings
+function initializeApp() {
+    // Setup file input listeners
     for (let i = 1; i <= 5; i++) {
-        const fileInput = document.getElementById(`video${i}`);
-        const nameInput = document.getElementById(`name${i}`);
-        const magicBtn = document.querySelector(`[data-video="${i}"]`);
+        const videoInput = document.getElementById(`video${i}`);
         const resSelector = document.getElementById(`res${i}`);
-        const linkInput = document.getElementById(`video${i}-link`);
-        const loadBtn = document.querySelector(`[data-video="${i}"].load-btn`);
-        
-        // File input handler
-        if (fileInput) fileInput.addEventListener('change', (e) => handleVideoUpload(e, i));
-        
-        // Name input handler
-        if (nameInput) nameInput.addEventListener('input', (e) => {
-            state.names[i] = e.target.value;
-        });
-        
-        // Magic wand button
-        if (magicBtn) magicBtn.addEventListener('click', () => enhanceClipName(i));
-        
-        // Resolution selector
-        if (resSelector) resSelector.addEventListener('change', (e) => {
-            state.resolutions[i] = e.target.value;
-        });
-        
-        // Toggle buttons
-        const toggleBtns = document.querySelectorAll(`[data-video="${i}"].toggle-btn`);
-        toggleBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => toggleInputType(i, e.target.dataset.type));
-        });
-        
-        // Load button for links
-        if (loadBtn) loadBtn.addEventListener('click', () => loadVideoFromLink(i));
-        
-        // Link input enter key handler
-        if (linkInput) {
-            linkInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    loadVideoFromLink(i);
-                }
+        const magicBtn = document.querySelector(`[data-video="${i}"].magic-btn`);
+        const nameInput = document.getElementById(`name${i}`);
+
+        if (videoInput) {
+            videoInput.addEventListener('change', (e) => handleVideoUpload(e, i));
+        }
+        if (resSelector) {
+            resSelector.addEventListener('change', (e) => {
+                state.resolutions[i] = e.target.value;
             });
         }
-        
-        // Set default resolution
-        state.resolutions[i] = 'mobile';
-    }
-    
-    // Generate and download buttons
-    const generateBtn = document.getElementById('generateBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    
-    if (generateBtn) generateBtn.addEventListener('click', generateVideo);
-    if (downloadBtn) downloadBtn.addEventListener('click', downloadVideo);
-}
-
-function handleVideoUpload(event, num) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const video = document.createElement('video');
-    video.src = URL.createObjectURL(file);
-    video.preload = 'metadata';
-    
-    video.onloadedmetadata = () => {
-        state.videos[num] = video;
-        const statusEl = document.getElementById(`status${num}`);
-        if (statusEl) statusEl.textContent = '✓ Loaded';
-        checkReady();
-    };
-    
-    video.onerror = () => {
-        const statusEl = document.getElementById(`status${num}`);
-        if (statusEl) statusEl.textContent = '❌ Error';
-        showMessage('Error loading video ' + num, 'error');
-    };
-}
-
-function toggleInputType(videoNum, type) {
-    const fileInput = document.getElementById(`file-input-${videoNum}`);
-    const linkInput = document.getElementById(`link-input-${videoNum}`);
-    const toggleBtns = document.querySelectorAll(`[data-video="${videoNum}"].toggle-btn`);
-    
-    toggleBtns.forEach(btn => {
-        if (btn.dataset.type === type) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+        if (magicBtn) {
+            magicBtn.addEventListener('click', () => enhanceName(i));
         }
-    });
-    
-    if (type === 'file') {
-        fileInput.style.display = 'block';
-        linkInput.style.display = 'none';
-    } else {
-        fileInput.style.display = 'none';
-        linkInput.style.display = 'flex';
+        if (nameInput) {
+            nameInput.addEventListener('input', (e) => {
+                state.names[i] = e.target.value;
+            });
+        }
+    }
+
+    // Setup generate button
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.addEventListener('click', generateVideo);
+
+    // Setup download button
+    const downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadVideo);
+
+    // Initialize default values
+    initializeDefaults();
+}
+
+function initializeDefaults() {
+    // Set default values from inputs
+    for (let i = 1; i <= 5; i++) {
+        const resSelector = document.getElementById(`res${i}`);
+        if (resSelector) {
+            state.resolutions[i] = resSelector.value;
+        }
+        const nameInput = document.getElementById(`name${i}`);
+        if (nameInput) {
+            state.names[i] = nameInput.value;
+        }
     }
 }
 
-async function loadVideoFromLink(videoNum) {
-    const linkInput = document.getElementById(`video${videoNum}-link`);
-    const loadBtn = document.querySelector(`[data-video="${videoNum}"].load-btn`);
-    const statusEl = document.getElementById(`status${videoNum}`);
+function enhanceName(videoNum) {
+    const nameInput = document.getElementById(`name${videoNum}`);
+    const magicBtn = document.querySelector(`[data-video="${videoNum}"].magic-btn`);
     
-    const url = linkInput?.value?.trim();
-    if (!url) {
-        showMessage('Please enter a video URL', 'error');
+    if (!nameInput || !nameInput.value) {
+        showMessage('Please enter a name first', 'error');
         return;
     }
+
+    // Add sparkle emojis
+    let enhanced = nameInput.value;
+    if (!enhanced.includes('✨')) {
+        enhanced = `✨ ${enhanced} ✨`;
+    }
     
+    nameInput.value = enhanced;
+    state.names[videoNum] = enhanced;
+    
+    // Animate the button
+    if (magicBtn) {
+        magicBtn.style.transform = 'scale(1.2) rotate(360deg)';
+        setTimeout(() => {
+            magicBtn.style.transform = 'scale(1) rotate(0deg)';
+        }, 300);
+    }
+    
+    showMessage('Name enhanced! ✨', 'success');
+}
+
+function handleVideoUpload(event, videoNum) {
+    const file = event.target.files[0];
+    const statusEl = document.getElementById(`status${videoNum}`);
+    
+    if (!file) return;
+
     try {
-        // Show loading state
-        if (loadBtn) {
-            loadBtn.textContent = 'Loading...';
-            loadBtn.disabled = true;
-        }
+        showMessage(`Loading video ${videoNum}...`, 'info');
         if (statusEl) statusEl.textContent = '⏳ Loading...';
-        
-        // Create video element and load the URL
+
         const video = document.createElement('video');
-        video.crossOrigin = 'anonymous';
         video.preload = 'metadata';
-        
-        // Handle different URL types
-        let videoUrl = url;
-        
-        // TikTok/douyin API URLs - use directly as they're already video URLs
-        if (url.includes('musical.ly/aweme/v1/play/') || 
-            url.includes('api2-16-h2.musical.ly') ||
-            url.includes('v.tiktok.com') ||
-            url.includes('tiktok.com/')) {
-            videoUrl = url; // Use the provided URL directly
-        }
-        // YouTube - extract video ID and create embed URL
-        else if (url.includes('youtube.com/watch?v=')) {
-            const videoId = url.split('v=')[1]?.split('&')[0];
-            videoUrl = `https://www.youtube.com/embed/${videoId}`;
-        }
-        // YouTube short links
-        else if (url.includes('youtu.be/')) {
-            const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-            videoUrl = `https://www.youtube.com/embed/${videoId}`;
-        }
-        
-        // Set video source
-        video.src = videoUrl;
-        
-        // Wait for metadata to load
-        await new Promise((resolve, reject) => {
-            video.onloadedmetadata = resolve;
-            video.onerror = () => reject(new Error('Failed to load video metadata'));
+        video.src = URL.createObjectURL(file);
+
+        video.onloadedmetadata = () => {
+            state.videos[videoNum] = video;
             
-            // Set timeout
-            setTimeout(() => reject(new Error('Loading timeout')), 15000);
-        });
-        
-        // Store the video
-        state.videos[videoNum] = video;
-        
-        // Update UI
-        if (statusEl) statusEl.textContent = '✓ Loaded from link';
-        showMessage(`Video ${videoNum} loaded from link`, 'success');
-        
-        checkReady();
-        
+            if (statusEl) statusEl.textContent = '✅ Loaded';
+            showMessage(`Video ${videoNum} loaded!`, 'success');
+            checkReady();
+        };
+
+        video.onerror = () => {
+            if (statusEl) statusEl.textContent = '❌ Failed';
+            showMessage(`Failed to load video ${videoNum}`, 'error');
+        };
+
     } catch (error) {
-        console.error('Error loading video from link:', error);
-        
-        if (statusEl) statusEl.textContent = '❌ Failed';
-        showMessage(`Failed to load video ${videoNum}: ${error.message}`, 'error');
-        
-        // Auto-detect and suggest CORS proxy for local testing
-        if (error.message.includes('CORS') || error.message.includes('blocked')) {
-            showMessage('Try using a CORS proxy or download the video first', 'info');
-        }
-    } finally {
-        // Reset button
-        if (loadBtn) {
-            loadBtn.textContent = 'Load';
-            loadBtn.disabled = false;
-        }
+        console.error('Error handling video upload:', error);
+        if (statusEl) statusEl.textContent = '❌ Error';
+        showMessage(`Error loading video ${videoNum}`, 'error');
     }
 }
 
@@ -203,7 +130,7 @@ function checkReady() {
     const allLoaded = Object.keys(state.videos).length === 5;
     const generateBtn = document.getElementById('generateBtn');
     if (generateBtn) generateBtn.disabled = !allLoaded;
-    
+
     if (allLoaded) {
         showMessage('✅ All videos loaded! Click Generate.', 'success');
     }
@@ -219,11 +146,11 @@ function showMessage(text, type) {
 
 function showProgress(percent, text) {
     const progress = document.getElementById('progress');
-    const bar = document.getElementById('progressBar');
+    const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     
     if (progress) progress.style.display = 'block';
-    if (bar) bar.style.width = percent + '%';
+    if (progressBar) progressBar.style.width = `${percent}%`;
     if (progressText) progressText.textContent = text;
 }
 
@@ -232,190 +159,63 @@ function hideProgress() {
     if (progress) progress.style.display = 'none';
 }
 
-// Magic wand functionality
-function enhanceClipName(videoNum) {
-    const nameInput = document.getElementById(`name${videoNum}`);
-    if (!nameInput) return;
-    
-    const currentName = nameInput.value.trim();
-    if (!currentName) return;
-    
-    const lowerName = currentName.toLowerCase();
-    let enhancedName = currentName;
-    
-    const enhancements = {
-        dunk: 'Slam Dunk 🏀', slam: 'Slam 🏀', shot: 'Amazing Shot 🎯',
-        goal: 'Epic Goal ⚽', score: 'Perfect Score 🎯', win: 'Victory 🏆',
-        victory: 'Victory 🏆', fail: 'Epic Fail 😂', funny: 'Hilarious 😂',
-        lol: 'LOL 😂', kill: 'Epic Kill 💀', eliminate: 'Eliminated 💀',
-        trick: 'Insane Trick 🎪', amazing: 'Amazing ✨', cool: 'Cool 😎',
-        awesome: 'Awesome 🔥', fire: 'Fire 🔥', lit: 'Lit 🔥',
-        clutch: 'Clutch Play ⚡', epic: 'Epic 🌟', crazy: 'Crazy 🤪',
-        insane: 'Insane 🤪', perfect: 'Perfect 💯', best: 'The Best 👑',
-        first: 'First Place 🥇', second: 'Second Place 🥈', third: 'Third Place 🥉',
-        lucky: 'Lucky 🍀', unlucky: 'Unlucky 💀', rage: 'Rage 😡',
-        angry: 'Angry 😡', happy: 'Happy 😊', sad: 'Sad 😢',
-        wow: 'Wow 😮', omg: 'OMG 😮', nice: 'Nice! 👍',
-        good: 'Good! 👍', great: 'Great! 🎉'
-    };
-    
-    for (const [keyword, enhanced] of Object.entries(enhancements)) {
-        if (lowerName.includes(keyword)) {
-            enhancedName = enhanced;
-            break;
-        }
-    }
-    
-    if (enhancedName === currentName) {
-        const emojis = ['🔥', '✨', '💯', '🎯', '🏆', '⚡', '🌟'];
-        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-        enhancedName = currentName.charAt(0).toUpperCase() + currentName.slice(1) + ' ' + randomEmoji;
-    }
-    
-    nameInput.value = enhancedName;
-    state.names[videoNum] = enhancedName;
-}
-
-function getSupportedMimeType() {
-    const types = [
-        'video/webm;codecs=vp8',
-        'video/webm',
-        'video/webm;codecs=vp9',
-        'video/mp4;codecs=h264',
-        'video/mp4'
-    ];
-    
-    for (const type of types) {
-        if (MediaRecorder.isTypeSupported(type)) {
-            return type;
-        }
-    }
-    
-    return 'video/webm';
-}
-
-function getFilename() {
-    const titleElement = document.getElementById('titleText');
-    const top5Element = document.getElementById('top5Text');
-    const objectElement = document.getElementById('rankingObject');
-    const endingElement = document.getElementById('endingText');
-    
-    const title = (titleElement && titleElement.value) || 'ranking';
-    const top5 = (top5Element && top5Element.value) || 'top-5';
-    const object = (objectElement && objectElement.value) || 'moments';
-    const ending = (endingElement && endingElement.value) || '';
-    
-    let filename = `${title}-${top5}-${object}-${ending}`.toLowerCase().replace(/\s+/g, '-');
-    filename = filename.replace(/[^a-z0-9-]/g, '');
-    
-    return filename + '.mp4';
-}
-
 async function generateVideo() {
+    if (state.isGenerating) {
+        showMessage('Already generating...', 'error');
+        return;
+    }
+
     try {
-        showMessage('Generating video...', 'info');
-        showProgress(0, 'Initializing...');
-        
-        state.processedVideos.clear();
-        
-        if (!navigator.mediaDevices || !window.MediaRecorder) {
-            throw new Error('Browser not supported. Use Chrome, Edge, or Firefox.');
-        }
-        
-        // Preload all videos to ensure they can be played
-        showProgress(5, 'Loading videos...');
-        for (let i = 1; i <= 5; i++) {
-            const video = state.videos[i];
-            if (video) {
-                video.currentTime = 0;
-                video.muted = true;
-                // Ensure video is ready to play
-                await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => reject(new Error(`Video ${i} loading timeout`)), 10000);
-                    
-                    const readyCheck = () => {
-                        if (video.readyState >= 2) { // HAVE_CURRENT_DATA
-                            clearTimeout(timeout);
-                            resolve();
-                        } else {
-                            video.addEventListener('loadeddata', readyCheck, { once: true });
-                        }
-                    };
-                    readyCheck();
-                });
-            }
-        }
-        
-        const mimeType = getSupportedMimeType();
-        state.mimeType = mimeType;
-        
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Always output 1080x1920 (mobile resolution)
+        state.isGenerating = true;
+        showMessage('Starting video generation...', 'info');
+
+        // Get title settings
+        const titleText = document.getElementById('titleText').value || 'Best';
+        const top5Text = document.getElementById('top5Text').value || 'TOP 5';
+        const top5Color = document.getElementById('top5Color').value || '#FF0000';
+        const rankingObject = document.getElementById('rankingObject').value || 'Moments';
+        const objectColor = document.getElementById('objectColor').value || '#FFD700';
+        const endingText = document.getElementById('endingText').value || 'Ever';
+        const subscribeText = document.getElementById('subscribeText').value || 'Subscribe for more!';
+
+        // Setup canvas
+        const canvas = document.createElement('canvas');
         canvas.width = 1080;
         canvas.height = 1920;
-        
-        // Get settings
-        const titleText = document.getElementById('titleText')?.value || 'Ranking';
-        const top5Text = document.getElementById('top5Text')?.value || 'TOP 5';
-        const top5Color = document.getElementById('top5Color')?.value || '#00FF00';
-        const rankingObject = document.getElementById('rankingObject')?.value || 'FUNNIEST';
-        const objectColor = document.getElementById('objectColor')?.value || '#FFFF00';
-        const endingText = document.getElementById('endingText')?.value || 'MOMENTS';
-        
-        // Play order: 3, 4, 5, 2, 1
-        const playOrder = [3, 4, 5, 2, 1];
-        
-        // Setup MediaRecorder
-        const stream = canvas.captureStream(25);
-        
-        let options = {
-            mimeType: mimeType,
+        const ctx = canvas.getContext('2d');
+
+        // Setup media recorder
+        const stream = canvas.captureStream(30);
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm',
             videoBitsPerSecond: 2500000
-        };
-        
-        let mediaRecorder;
-        try {
-            mediaRecorder = new MediaRecorder(stream, options);
-        } catch (e) {
-            try {
-                options = { videoBitsPerSecond: 2500000 };
-                mediaRecorder = new MediaRecorder(stream, options);
-            } catch (e2) {
-                mediaRecorder = new MediaRecorder(stream);
-            }
-        }
-        
+        });
+
         const chunks = [];
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) chunks.push(e.data);
-        };
-        
-        mediaRecorder.onerror = (e) => {
-            throw new Error('Recording failed: ' + e.error);
-        };
-        
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
         mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: mimeType });
+            const blob = new Blob(chunks, { type: 'video/webm' });
             state.recordedBlob = blob;
-            showMessage('✅ Video generated!', 'success');
+            
+            // Show download button
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
-                downloadBtn.disabled = false;
+                downloadBtn.style.display = 'block';
                 downloadBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
             }
+            
             hideProgress();
+            showMessage('✅ Video generated successfully!', 'success');
         };
+
+        mediaRecorder.start();
+        showProgress(0, 'Initializing...');
+
+        // Video play order: 3,4,5,2,1
+        const videoOrder = [3, 4, 5, 2, 1];
         
-        mediaRecorder.start(100);
-        showProgress(10, 'Recording...');
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Process each video in order
-        for (let i = 0; i < playOrder.length; i++) {
-            const videoNum = playOrder[i];
+        for (let i = 0; i < videoOrder.length; i++) {
+            const videoNum = videoOrder[i];
             const video = state.videos[videoNum];
             
             if (!video) {
@@ -425,7 +225,7 @@ async function generateVideo() {
             // Show subscribe button before video 2 (after video 5)
             if (i === 3) { // After 3,4,5 and before 2
                 showProgress(60, 'Showing subscribe...');
-                await showSubscribeButton(ctx, canvas.width, canvas.height);
+                await showSubscribeButton(ctx, canvas.width, canvas.height, video);
                 await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds
             }
             
@@ -480,6 +280,8 @@ async function generateVideo() {
         console.error('Error:', error);
         showMessage('❌ Error: ' + error.message, 'error');
         hideProgress();
+    } finally {
+        state.isGenerating = false;
     }
 }
 
@@ -526,32 +328,88 @@ function drawVideoFrame(ctx, video, canvasWidth, canvasHeight, videoNum) {
     }
 }
 
-async function showSubscribeButton(ctx, width, height) {
+function roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
+
+async function showSubscribeButton(ctx, width, height, currentVideo) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-            // Draw black background
-            ctx.fillStyle = '#000';
+            // Draw the current video frame (paused)
+            if (currentVideo) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Draw video frame
+                drawVideoFrame(ctx, currentVideo, width, height, 2); // Video 2 since it's before video 2
+            }
+            
+            // Add semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.fillRect(0, 0, width, height);
             
-            // Draw subscribe button centered
+            // Draw subscribe button with transparency
             const imgAspect = img.width / img.height;
-            const targetWidth = width * 0.6;
+            const targetWidth = width * 0.5;
             const targetHeight = targetWidth / imgAspect;
             const x = (width - targetWidth) / 2;
             const y = (height - targetHeight) / 2;
+            
+            // Add white border for better visibility
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(x - 2, y - 2, targetWidth + 4, targetHeight + 4);
             
             ctx.drawImage(img, x, y, targetWidth, targetHeight);
             resolve();
         };
         img.onerror = () => {
             // Fallback if image doesn't load
-            ctx.fillStyle = '#000';
+            if (currentVideo) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Draw video frame
+                drawVideoFrame(ctx, currentVideo, width, height, 2); // Video 2 since it's before video 2
+            }
+            
+            // Add semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 80px Arial';
+            
+            // Draw fallback subscribe button
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 3;
+            
+            const buttonWidth = 500;
+            const buttonHeight = 100;
+            const buttonX = (width - buttonWidth) / 2;
+            const buttonY = (height - buttonHeight) / 2;
+            
+            // Draw rounded rectangle with transparency
+            roundRect(ctx, buttonX, buttonY, buttonWidth, buttonHeight, 20);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw subscribe text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 42px Arial';
             ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
             ctx.fillText('SUBSCRIBE', width / 2, height / 2);
+            
             resolve();
         };
         img.src = 'autosub.png';
@@ -641,17 +499,7 @@ function drawOverlays(ctx, width, height, titleText, top5Text, top5Color, rankin
         numberY += numberSpacing;
     }
     
-    // Draw current number overlay on video
-    if (currentVideo) {
-        ctx.font = `bold ${numberFontSize * 2}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillStyle = numberColors[currentVideo];
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 8;
-        const overlayY = height * 0.5;
-        ctx.strokeText(currentVideo.toString(), width / 2, overlayY);
-        ctx.fillText(currentVideo.toString(), width / 2, overlayY);
-    }
+    // Note: Big number overlay removed as requested
 }
 
 function downloadVideo() {
@@ -687,4 +535,11 @@ function downloadVideo() {
         console.error('Download error:', error);
         showMessage('❌ Download failed: ' + error.message, 'error');
     }
+}
+
+function getFilename() {
+    const titleText = document.getElementById('titleText').value || 'Best';
+    const top5Text = document.getElementById('top5Text').value || 'TOP 5';
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    return `${titleText} ${top5Text} - ${timestamp}.webm`;
 }
