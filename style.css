@@ -172,6 +172,13 @@ h2 {
 .color-btn.active {
     border-color: #fff;
     transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.popup-settings {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #555;
 }
 
 .preview-box {

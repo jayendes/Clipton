@@ -5,7 +5,8 @@ const state = {
     highlightColor: '#FF0000',
     recordedBlob: null,
     mimeType: 'video/webm',
-    processedVideos: new Set() // Track which videos have been shown
+    processedVideos: new Set(), // Track which videos have been shown
+    showSubscribe: false // Track when to show subscribe popup
 };
 
 // Initialize
@@ -28,9 +29,18 @@ function setupEventListeners() {
     // Color buttons
     document.querySelectorAll('.color-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            // Remove active from all
+            document.querySelectorAll('.color-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.borderColor = 'transparent';
+            });
+            
+            // Add active to clicked
             e.target.classList.add('active');
+            e.target.style.borderColor = '#fff';
             state.highlightColor = e.target.dataset.color;
+            
+            console.log('Highlight color set to:', state.highlightColor);
         });
     });
     
@@ -88,17 +98,17 @@ function hideProgress() {
     document.getElementById('progress').style.display = 'none';
 }
 
-// Get the best supported MIME type for MediaRecorder
+// Get the best supported MIME type for MediaRecorder (prefer MP4 for YouTube)
 function getSupportedMimeType() {
-    // Test in order of preference
+    // Test in order of preference (MP4 first for YouTube compatibility)
     const types = [
+        'video/mp4;codecs=h264',
+        'video/mp4',
         'video/webm;codecs=vp9,opus',
         'video/webm;codecs=vp8,opus',
         'video/webm;codecs=vp9',
         'video/webm;codecs=vp8',
-        'video/webm',
-        'video/mp4;codecs=h264',
-        'video/mp4'
+        'video/webm'
     ];
     
     for (const type of types) {
@@ -128,10 +138,8 @@ function getFilename() {
     // Clean up special characters
     filename = filename.replace(/[^a-z0-9-]/g, '');
     
-    // Add file extension based on MIME type
-    const extension = state.mimeType.includes('mp4') ? '.mp4' : '.webm';
-    
-    return filename + extension;
+    // Force MP4 extension for YouTube compatibility
+    return filename + '.mp4';
 }
 
 async function generateVideo() {
@@ -139,8 +147,9 @@ async function generateVideo() {
         showMessage('Preparing video generation...', 'info');
         showProgress(0, 'Initializing...');
         
-        // Reset processed videos
+        // Reset processed videos and subscribe state
         state.processedVideos.clear();
+        state.showSubscribe = false;
         
         // Check browser compatibility
         if (!navigator.mediaDevices || !window.MediaRecorder) {
@@ -162,6 +171,7 @@ async function generateVideo() {
         const titleText = document.getElementById('titleText').value || 'Ranking Top 5 Best';
         const highlightWord = document.getElementById('highlightWord').value;
         const endingText = document.getElementById('endingText').value || 'Moments';
+        const subscribeText = document.getElementById('subscribeText').value || 'Subscribe for more!';
         
         // Play order: 2, 3, 4, 5, 1
         const playOrder = [2, 3, 4, 5, 1];
@@ -171,7 +181,7 @@ async function generateVideo() {
         
         let options = {
             mimeType: mimeType,
-            videoBitsPerSecond: 2500000 // Lower bitrate for compatibility
+            videoBitsPerSecond: 3000000 // Higher bitrate for better quality
         };
         
         // Try to create MediaRecorder with options
@@ -182,7 +192,7 @@ async function generateVideo() {
             console.log('Falling back to default options');
             // Try without mimeType
             try {
-                options = { videoBitsPerSecond: 2500000 };
+                options = { videoBitsPerSecond: 3000000 };
                 mediaRecorder = new MediaRecorder(stream, options);
             } catch (e2) {
                 console.log('Falling back to no options');
@@ -228,6 +238,16 @@ async function generateVideo() {
             
             if (!video) {
                 throw new Error(`Video ${videoNum} is not loaded properly`);
+            }
+            
+            // Show subscribe popup before last video (video 1)
+            if (videoNum === 1 && !state.showSubscribe) {
+                state.showSubscribe = true;
+                showProgress(70 + (i * 5), 'Showing subscribe popup...');
+                
+                // Show subscribe popup for 3 seconds
+                await showSubscribePopup(ctx, canvas.width, canvas.height, subscribeText);
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
             
             showProgress(20 + (i * 15), `Processing video ${i + 1} of 5...`);
@@ -315,20 +335,61 @@ async function generateVideo() {
     }
 }
 
+function showSubscribePopup(ctx, width, height, text) {
+    return new Promise((resolve) => {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const popupWidth = width * 0.8;
+        const popupHeight = height * 0.3;
+        const popupX = (width - popupWidth) / 2;
+        const popupY = (height - popupHeight) / 2;
+        
+        // Draw semi-transparent overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Draw popup background
+        ctx.fillStyle = '#222';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.fillRect(popupX, popupY, popupWidth, popupHeight);
+        ctx.strokeRect(popupX, popupY, popupWidth, popupHeight);
+        
+        // Draw subscribe text
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Add text outline
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+        ctx.strokeText(text, centerX, centerY);
+        ctx.fillText(text, centerX, centerY);
+        
+        // Draw "Click to continue" text
+        ctx.font = '24px Arial';
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('Click to continue...', centerX, centerY + 50);
+        
+        resolve();
+    });
+}
+
 function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, currentVideo) {
-    // Scale font sizes for phone resolution
-    const titleFontSize = Math.floor(width * 0.065); // ~47px for 720px width
-    const numberFontSize = Math.floor(width * 0.083); // ~60px for 720px width
-    const nameFontSize = Math.floor(width * 0.046); // ~33px for 720px width
+    // Scale font sizes for phone resolution with proper sizing
+    const titleFontSize = Math.min(Math.floor(width * 0.055), 40); // Smaller title font
+    const numberFontSize = Math.min(Math.floor(width * 0.07), 50); // Smaller number font
+    const nameFontSize = Math.min(Math.floor(width * 0.04), 30); // Smaller name font
     
-    // Draw title
+    // Draw title with proper wrapping
     ctx.font = `bold ${titleFontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = Math.floor(titleFontSize * 0.08); // ~4px
+    ctx.lineWidth = Math.max(Math.floor(titleFontSize * 0.1), 3); // Ensure outline is visible
     ctx.fillStyle = '#FFF';
     
-    const titleY = height * 0.08; // 8% from top
+    const titleY = height * 0.06; // Higher position to prevent cutoff
     
     // Build full title
     let fullTitle = titleText;
@@ -339,54 +400,125 @@ function drawOverlays(ctx, width, height, titleText, highlightWord, endingText, 
         fullTitle += ' ' + endingText;
     }
     
-    // Draw title with outline
-    ctx.strokeText(fullTitle, width / 2, titleY);
+    // Check if title is too wide and wrap if necessary
+    const titleWidth = ctx.measureText(fullTitle).width;
+    const maxTitleWidth = width * 0.9; // Leave some padding
     
-    // Draw title parts with color
-    if (highlightWord && titleText.includes(highlightWord)) {
-        // Complex rendering with highlight
-        const parts = titleText.split(highlightWord);
-        const beforeText = parts[0];
-        const afterText = parts[1] || '';
+    if (titleWidth > maxTitleWidth) {
+        // Split title into multiple lines
+        const words = fullTitle.split(' ');
+        let lines = [];
+        let currentLine = '';
         
-        // Measure text widths
-        const beforeWidth = ctx.measureText(beforeText).width;
-        const highlightWidth = ctx.measureText(highlightWord).width;
-        const afterWidth = ctx.measureText(afterText + ' ' + endingText).width;
-        const totalWidth = beforeWidth + highlightWidth + afterWidth;
+        for (const word of words) {
+            const testLine = currentLine + (currentLine ? ' ' : '') + word;
+            const testWidth = ctx.measureText(testLine).width;
+            
+            if (testWidth <= maxTitleWidth) {
+                currentLine = testLine;
+            } else {
+                if (currentLine) {
+                    lines.push(currentLine);
+                }
+                currentLine = word;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
+        }
         
-        let x = (width - totalWidth) / 2;
-        
-        // Draw before text
-        ctx.fillStyle = '#FFF';
-        ctx.fillText(beforeText, x + beforeWidth / 2, titleY);
-        x += beforeWidth;
-        
-        // Draw highlight
-        ctx.fillStyle = state.highlightColor;
-        ctx.fillText(highlightWord, x + highlightWidth / 2, titleY);
-        x += highlightWidth;
-        
-        // Draw after text
-        ctx.fillStyle = '#FFF';
-        ctx.fillText(afterText + ' ' + endingText, x + afterWidth / 2, titleY);
+        // Draw each line
+        lines.forEach((line, index) => {
+            const lineY = titleY + (index * titleFontSize * 1.2);
+            
+            // Check if this line contains the highlight
+            if (highlightWord && line.includes(highlightWord)) {
+                const parts = line.split(highlightWord);
+                const beforeText = parts[0];
+                const afterText = parts[1] || '';
+                
+                const beforeWidth = ctx.measureText(beforeText).width;
+                const highlightWidth = ctx.measureText(highlightWord).width;
+                
+                let x = (width - ctx.measureText(line).width) / 2;
+                
+                // Draw before text
+                ctx.fillStyle = '#FFF';
+                ctx.strokeText(beforeText, x + beforeWidth / 2, lineY);
+                ctx.fillText(beforeText, x + beforeWidth / 2, lineY);
+                x += beforeWidth;
+                
+                // Draw highlight
+                ctx.fillStyle = state.highlightColor;
+                ctx.strokeText(highlightWord, x + highlightWidth / 2, lineY);
+                ctx.fillText(highlightWord, x + highlightWidth / 2, lineY);
+                x += highlightWidth;
+                
+                // Draw after text
+                ctx.fillStyle = '#FFF';
+                ctx.strokeText(afterText, x + ctx.measureText(afterText).width / 2, lineY);
+                ctx.fillText(afterText, x + ctx.measureText(afterText).width / 2, lineY);
+            } else {
+                ctx.fillStyle = '#FFF';
+                ctx.strokeText(line, width / 2, lineY);
+                ctx.fillText(line, width / 2, lineY);
+            }
+        });
     } else {
-        ctx.fillStyle = '#FFF';
-        ctx.fillText(fullTitle, width / 2, titleY);
+        // Single line title
+        ctx.strokeText(fullTitle, width / 2, titleY);
+        
+        // Draw title parts with color
+        if (highlightWord && titleText.includes(highlightWord)) {
+            const parts = titleText.split(highlightWord);
+            const beforeText = parts[0];
+            const afterText = parts[1] || '';
+            
+            const beforeWidth = ctx.measureText(beforeText).width;
+            const highlightWidth = ctx.measureText(highlightWord).width;
+            const afterWidth = ctx.measureText(afterText + ' ' + endingText).width;
+            const totalWidth = beforeWidth + highlightWidth + afterWidth;
+            
+            let x = (width - totalWidth) / 2;
+            
+            // Draw before text
+            ctx.fillStyle = '#FFF';
+            ctx.fillText(beforeText, x + beforeWidth / 2, titleY);
+            x += beforeWidth;
+            
+            // Draw highlight
+            ctx.fillStyle = state.highlightColor;
+            ctx.fillText(highlightWord, x + highlightWidth / 2, titleY);
+            x += highlightWidth;
+            
+            // Draw after text
+            ctx.fillStyle = '#FFF';
+            ctx.fillText(afterText + ' ' + endingText, x + afterWidth / 2, titleY);
+        } else {
+            ctx.fillStyle = '#FFF';
+            ctx.fillText(fullTitle, width / 2, titleY);
+        }
     }
     
     // Draw numbers 1-5 with persistent text
     ctx.font = `bold ${numberFontSize}px Arial`;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFF';
+    ctx.textBaseline = 'top';
     
-    let numberY = height * 0.25; // 25% from top
-    const numberX = width * 0.07; // 7% from left
-    const nameX = width * 0.25; // 25% from left
-    const numberSpacing = height * 0.14; // 14% spacing
+    let numberY = height * 0.2; // Start higher to avoid title overlap
+    const numberX = width * 0.05; // More padding from edge
+    const nameX = width * 0.2; // Adjusted position
+    const numberSpacing = height * 0.12; // Tighter spacing
     
     for (let i = 1; i <= 5; i++) {
         const numberText = `${i}.`;
+        
+        // Check if we're running out of space at the bottom
+        if (numberY > height * 0.85) {
+            break; // Stop drawing if we're too low
+        }
+        
         ctx.strokeText(numberText, numberX, numberY);
         ctx.fillText(numberText, numberX, numberY);
         
@@ -411,7 +543,7 @@ function downloadVideo() {
     try {
         showMessage('Preparing download...', 'info');
         
-        // Create download link
+        // Create download link with MP4 filename for YouTube
         const url = URL.createObjectURL(state.recordedBlob);
         const a = document.createElement('a');
         a.href = url;
@@ -429,7 +561,7 @@ function downloadVideo() {
             setTimeout(() => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                showMessage('✅ Video downloaded successfully!', 'success');
+                showMessage('✅ Video downloaded successfully! Ready for YouTube upload!', 'success');
             }, 100);
         }, 100);
         
