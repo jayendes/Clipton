@@ -4,7 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clipton</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e3c72;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .video-slot {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .slot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .file-input {
+            margin-bottom: 10px;
+        }
+
+        .file-input input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+
+        .name-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .name-input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+
+        .magic-btn {
+            padding: 10px 15px;
+            background: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .magic-btn:hover {
+            background: #45a049;
+        }
+
+        .res-selector {
+            padding: 5px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .title-section, .subscribe-section, .generate-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .title-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .title-inputs input {
+            padding: 10px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+
+        .subscribe-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+
+        #generateBtn, #downloadBtn {
+            padding: 15px 30px;
+            background: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+
+        #generateBtn:hover, #downloadBtn:hover {
+            background: #45a049;
+        }
+
+        #generateBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #progress {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        #progressBar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        #progressBar div {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s ease;
+        }
+
+        #progressText {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background: #4CAF50;
+        }
+
+        .message.error {
+            background: #f44336;
+        }
+
+        .message.info {
+            background: #2196F3;
+        }
+    </style>
 <script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
 </head>
 <body>
@@ -133,8 +335,10 @@
             <!-- Generate Section -->
             <div class="generate-section">
                 <button id="generateBtn" disabled>🎬 Generate Video</button>
-                <div id="progress" class="progress" style="display: none;">
-                    <div id="progressBar" class="progress-bar"></div>
+                <div id="progress" style="display: none;">
+                    <div id="progressBar">
+                        <div style="width: 0%"></div>
+                    </div>
                     <div id="progressText">Processing...</div>
                 </div>
                 <button id="downloadBtn" style="display: none;">⬇️ Download Video</button>
@@ -144,6 +348,485 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        const state = {
+            videos: {},
+            resolutions: {},
+            names: {},
+            processedVideos: new Set(),
+            recordedBlob: null,
+            isGenerating: false
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            console.log('Initializing app...');
+            
+            // Setup file input listeners
+            for (let i = 1; i <= 5; i++) {
+                const videoInput = document.getElementById(`video${i}`);
+                const resSelector = document.getElementById(`res${i}`);
+                const magicBtn = document.querySelector(`[data-video="${i}"].magic-btn`);
+                const nameInput = document.getElementById(`name${i}`);
+
+                console.log(`Setting up video ${i}:`, {
+                    videoInput: !!videoInput,
+                    resSelector: !!resSelector,
+                    magicBtn: !!magicBtn,
+                    nameInput: !!nameInput
+                });
+
+                if (videoInput) {
+                    videoInput.addEventListener('change', (e) => handleVideoUpload(e, i));
+                }
+                if (resSelector) {
+                    resSelector.addEventListener('change', (e) => {
+                        state.resolutions[i] = e.target.value;
+                        console.log(`Resolution for video ${i} set to:`, e.target.value);
+                    });
+                }
+                if (magicBtn) {
+                    magicBtn.addEventListener('click', () => enhanceName(i));
+                }
+                if (nameInput) {
+                    nameInput.addEventListener('input', (e) => {
+                        state.names[i] = e.target.value;
+                    });
+                }
+            }
+
+            // Setup generate button
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', generateVideo);
+                console.log('Generate button setup complete');
+            }
+
+            // Setup download button
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', downloadVideo);
+                console.log('Download button setup complete');
+            }
+
+            // Initialize default values
+            initializeDefaults();
+            console.log('App initialization complete');
+        }
+
+        function initializeDefaults() {
+            for (let i = 1; i <= 5; i++) {
+                const resSelector = document.getElementById(`res${i}`);
+                if (resSelector) {
+                    state.resolutions[i] = resSelector.value;
+                }
+                const nameInput = document.getElementById(`name${i}`);
+                if (nameInput) {
+                    state.names[i] = nameInput.value;
+                }
+            }
+        }
+
+        function enhanceName(videoNum) {
+            const nameInput = document.getElementById(`name${videoNum}`);
+            const magicBtn = document.querySelector(`[data-video="${videoNum}"].magic-btn`);
+            
+            if (!nameInput || !nameInput.value) {
+                showMessage('Please enter a name first', 'error');
+                return;
+            }
+
+            let enhanced = nameInput.value;
+            if (!enhanced.includes('✨')) {
+                enhanced = `✨ ${enhanced} ✨`;
+            }
+            
+            nameInput.value = enhanced;
+            state.names[videoNum] = enhanced;
+            
+            if (magicBtn) {
+                magicBtn.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    magicBtn.style.transform = 'scale(1)';
+                }, 300);
+            }
+            
+            showMessage('Name enhanced! ✨', 'success');
+        }
+
+        function handleVideoUpload(event, videoNum) {
+            const file = event.target.files[0];
+            const statusEl = document.getElementById(`status${videoNum}`);
+            
+            if (!file) {
+                console.log(`No file selected for video ${videoNum}`);
+                return;
+            }
+
+            console.log(`Loading video ${videoNum}:`, file.name, file.type, file.size);
+            
+            try {
+                showMessage(`Loading video ${videoNum}...`, 'info');
+                if (statusEl) statusEl.textContent = '⏳ Loading...';
+                statusEl.style.background = '#2196F3';
+
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.src = URL.createObjectURL(file);
+
+                const timeout = setTimeout(() => {
+                    console.error(`Video ${videoNum} metadata loading timeout`);
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Timeout';
+                        statusEl.style.background = '#f44336';
+                    }
+                    showMessage(`Video ${videoNum} loading timeout`, 'error');
+                    URL.revokeObjectURL(video.src);
+                }, 15000);
+
+                video.onloadedmetadata = () => {
+                    clearTimeout(timeout);
+                    console.log(`Video ${videoNum} metadata loaded successfully`);
+                    console.log(`Video dimensions: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
+                    
+                    state.videos[videoNum] = video;
+                    
+                    if (statusEl) {
+                        statusEl.textContent = '✅ Loaded';
+                        statusEl.style.background = '#4CAF50';
+                    }
+                    showMessage(`Video ${videoNum} loaded!`, 'success');
+                    checkReady();
+                };
+
+                video.onerror = (e) => {
+                    clearTimeout(timeout);
+                    console.error(`Video ${videoNum} error:`, e);
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Failed';
+                        statusEl.style.background = '#f44336';
+                    }
+                    showMessage(`Failed to load video ${videoNum}`, 'error');
+                    URL.revokeObjectURL(video.src);
+                };
+
+            } catch (error) {
+                console.error('Error handling video upload:', error);
+                if (statusEl) {
+                    statusEl.textContent = '❌ Error';
+                    statusEl.style.background = '#f44336';
+                }
+                showMessage(`Error loading video ${videoNum}: ${error.message}`, 'error');
+            }
+        }
+
+        function checkReady() {
+            const allLoaded = Object.keys(state.videos).length === 5;
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn) generateBtn.disabled = !allLoaded;
+
+            if (allLoaded) {
+                showMessage('✅ All videos loaded! Click Generate.', 'success');
+            }
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            if (msg) {
+                msg.textContent = text;
+                msg.className = `message ${type}`;
+                console.log(`Message: ${text} (${type})`);
+            }
+        }
+
+        function showProgress(percent, text) {
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            if (progress) progress.style.display = 'block';
+            if (progressBar) progressBar.firstElementChild.style.width = `${percent}%`;
+            if (progressText) progressText.textContent = text;
+        }
+
+        function hideProgress() {
+            const progress = document.getElementById('progress');
+            if (progress) progress.style.display = 'none';
+        }
+
+        async function generateVideo() {
+            if (state.isGenerating) {
+                showMessage('Already generating...', 'error');
+                return;
+            }
+
+            try {
+                state.isGenerating = true;
+                console.log('Starting video generation...');
+                console.log('Loaded videos:', Object.keys(state.videos));
+                showMessage('Starting video generation...', 'info');
+
+                const titleText = document.getElementById('titleText').value || 'Best';
+                const top5Text = document.getElementById('top5Text').value || 'TOP 5';
+                const top5Color = document.getElementById('top5Color').value || '#FF0000';
+                const rankingObject = document.getElementById('rankingObject').value || 'Moments';
+                const objectColor = document.getElementById('objectColor').value || '#FFD700';
+                const endingText = document.getElementById('endingText').value || 'Ever';
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080;
+                canvas.height = 1920;
+                const ctx = canvas.getContext('2d');
+
+                const stream = canvas.captureStream(30);
+                const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm',
+                    videoBitsPerSecond: 2500000
+                });
+
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    state.recordedBlob = blob;
+                    
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    if (downloadBtn) {
+                        downloadBtn.style.display = 'block';
+                    }
+                    
+                    hideProgress();
+                    showMessage('✅ Video generated successfully!', 'success');
+                };
+
+                mediaRecorder.start();
+                showProgress(0, 'Initializing...');
+
+                const videoOrder = [3, 4, 5, 2, 1];
+                
+                for (let i = 0; i < videoOrder.length; i++) {
+                    const videoNum = videoOrder[i];
+                    const video = state.videos[videoNum];
+                    
+                    console.log(`Processing video ${videoNum} (index ${i})`);
+                    
+                    if (!video) {
+                        console.error(`Video ${videoNum} not found in state.videos:`, Object.keys(state.videos));
+                        throw new Error(`Video ${videoNum} not loaded`);
+                    }
+                    
+                    showProgress(20 + (i * 15), `Processing video ${i + 1}/5...`);
+                    
+                    video.currentTime = 0;
+                    video.muted = true;
+                    
+                    await video.play();
+                    
+                    state.processedVideos.add(videoNum);
+                    
+                    await new Promise((resolve) => {
+                        let frameCount = 0;
+                        const maxFrames = 600;
+                        
+                        const renderFrame = () => {
+                            frameCount++;
+                            
+                            if (video.ended || video.paused || frameCount > maxFrames) {
+                                resolve();
+                                return;
+                            }
+                            
+                            ctx.fillStyle = '#000';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            
+                            drawVideoFrame(ctx, video, canvas.width, canvas.height, videoNum);
+                            drawOverlays(ctx, canvas.width, canvas.height, titleText, top5Text, top5Color, 
+                                        rankingObject, objectColor, endingText, videoNum);
+                            
+                            requestAnimationFrame(renderFrame);
+                        };
+                        
+                        renderFrame();
+                    });
+                    
+                    video.pause();
+                }
+                
+                showProgress(95, 'Finalizing...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                mediaRecorder.stop();
+                showProgress(100, 'Complete!');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('❌ Error: ' + error.message, 'error');
+                hideProgress();
+            } finally {
+                state.isGenerating = false;
+            }
+        }
+
+        function drawVideoFrame(ctx, video, canvasWidth, canvasHeight, videoNum) {
+            const resolution = state.resolutions[videoNum] || 'mobile';
+            
+            try {
+                const videoAspect = video.videoWidth / video.videoHeight;
+                const canvasAspect = canvasWidth / canvasHeight;
+                
+                let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                
+                if (resolution === 'pc') {
+                    const zoomFactor = 1.15;
+                    
+                    if (videoAspect > canvasAspect) {
+                        drawHeight = canvasHeight * zoomFactor;
+                        drawWidth = drawHeight * videoAspect;
+                        offsetX = (canvasWidth - drawWidth) / 2;
+                        offsetY = (canvasHeight - drawHeight) / 2;
+                    } else {
+                        drawWidth = canvasWidth * zoomFactor;
+                        drawHeight = drawWidth / videoAspect;
+                        offsetX = (canvasWidth - drawWidth) / 2;
+                        offsetY = (canvasHeight - drawHeight) / 2;
+                    }
+                } else {
+                    if (videoAspect > canvasAspect) {
+                        drawHeight = canvasHeight;
+                        drawWidth = canvasHeight * videoAspect;
+                        offsetX = (canvasWidth - drawWidth) / 2;
+                    } else {
+                        drawWidth = canvasWidth;
+                        drawHeight = canvasWidth / videoAspect;
+                        offsetY = (canvasHeight - drawHeight) / 2;
+                    }
+                }
+                
+                ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+            } catch (e) {
+                console.warn('Failed to draw video frame:', e);
+            }
+        }
+
+        function drawOverlays(ctx, width, height, titleText, top5Text, top5Color, rankingObject, objectColor, endingText, currentVideo) {
+            const titleFontSize = Math.floor(width * 0.055);
+            const numberFontSize = Math.floor(width * 0.09);
+            const nameFontSize = Math.floor(width * 0.045);
+            
+            ctx.font = `bold ${titleFontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = Math.max(Math.floor(titleFontSize * 0.12), 4);
+            
+            const titleY = height * 0.06;
+            
+            const titleWidth = ctx.measureText(titleText).width;
+            const top5Width = ctx.measureText(top5Text).width;
+            const objectWidth = ctx.measureText(rankingObject).width;
+            const endingWidth = ctx.measureText(endingText).width;
+            const totalWidth = titleWidth + top5Width + objectWidth + endingWidth + 30;
+            
+            let x = (width - totalWidth) / 2;
+            
+            ctx.fillStyle = '#FFF';
+            ctx.strokeText(titleText, x + titleWidth / 2, titleY);
+            ctx.fillText(titleText, x + titleWidth / 2, titleY);
+            x += titleWidth + 10;
+            
+            ctx.fillStyle = top5Color;
+            ctx.strokeText(top5Text, x + top5Width / 2, titleY);
+            ctx.fillText(top5Text, x + top5Width / 2, titleY);
+            x += top5Width + 10;
+            
+            ctx.fillStyle = objectColor;
+            ctx.strokeText(rankingObject, x + objectWidth / 2, titleY);
+            ctx.fillText(rankingObject, x + objectWidth / 2, titleY);
+            x += objectWidth + 10;
+            
+            ctx.fillStyle = '#FFF';
+            ctx.strokeText(endingText, x + endingWidth / 2, titleY);
+            ctx.fillText(endingText, x + endingWidth / 2, titleY);
+            
+            ctx.font = `bold ${numberFontSize}px Arial`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            
+            let numberY = height * 0.18;
+            const numberX = width * 0.05;
+            const nameX = width * 0.18;
+            const numberSpacing = height * 0.12;
+            
+            const numberColors = {
+                1: '#FFD700',
+                2: '#C0C0C0',
+                3: '#CD7F32',
+                4: '#FFFFFF',
+                5: '#FFFFFF'
+            };
+            
+            for (let i = 1; i <= 5; i++) {
+                const numberText = `${i}.`;
+                
+                ctx.fillStyle = numberColors[i];
+                ctx.strokeText(numberText, numberX, numberY);
+                ctx.fillText(numberText, numberX, numberY);
+                
+                if (state.processedVideos.has(i) && state.names[i]) {
+                    ctx.font = `bold ${nameFontSize}px Arial`;
+                    ctx.fillStyle = '#FFF';
+                    ctx.strokeText(state.names[i], nameX, numberY + 5);
+                    ctx.fillText(state.names[i], nameX, numberY + 5);
+                    ctx.font = `bold ${numberFontSize}px Arial`;
+                }
+                
+                numberY += numberSpacing;
+            }
+        }
+
+        function downloadVideo() {
+            if (!state.recordedBlob) {
+                showMessage('❌ Generate video first!', 'error');
+                return;
+            }
+            
+            try {
+                showMessage('Preparing download...', 'info');
+                
+                const url = URL.createObjectURL(state.recordedBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = getFilename();
+                a.style.display = 'none';
+                
+                document.body.appendChild(a);
+                
+                setTimeout(() => {
+                    a.click();
+                    
+                    setTimeout(() => {
+                        if (document.body.contains(a)) {
+                            document.body.removeChild(a);
+                        }
+                        URL.revokeObjectURL(url);
+                        showMessage('✅ Downloaded!', 'success');
+                    }, 100);
+                }, 100);
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                showMessage('❌ Download failed: ' + error.message, 'error');
+            }
+        }
+
+        function getFilename() {
+            const titleText = document.getElementById('titleText').value || 'Best';
+            const top5Text = document.getElementById('top5Text').value || 'TOP 5';
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            return `${titleText} ${top5Text} - ${timestamp}.webm`;
+        }
+    </script>
 </body>
 </html>
