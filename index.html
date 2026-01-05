@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipton</title>
+    <title>Clipton - Maximum Implementation</title>
     <style>
         * {
             margin: 0;
@@ -67,6 +67,24 @@
             color: #000;
         }
 
+        .video-preview {
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .video-preview video {
+            width: 100%;
+            max-height: 200px;
+            background: #000;
+            border-radius: 5px;
+        }
+
+        .video-info {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
         .name-input-group {
             display: flex;
             gap: 10px;
@@ -109,7 +127,7 @@
             font-weight: bold;
         }
 
-        .title-section, .subscribe-section, .generate-section {
+        .title-section, .subscribe-section, .generate-section, .quality-section {
             background: rgba(255, 255, 255, 0.1);
             padding: 20px;
             margin-bottom: 20px;
@@ -131,16 +149,17 @@
             color: #000;
         }
 
-        .subscribe-section input {
+        .subscribe-section input, .quality-section input, .quality-section select {
             width: 100%;
             padding: 10px;
             border: 2px solid #4CAF50;
             border-radius: 5px;
             background: rgba(255, 255, 255, 0.9);
             color: #000;
+            margin-bottom: 10px;
         }
 
-        #generateBtn, #downloadBtn {
+        #generateBtn, #downloadBtn, #cancelBtn, #resetBtn {
             padding: 15px 30px;
             background: #4CAF50;
             border: none;
@@ -151,8 +170,16 @@
             margin: 10px;
         }
 
-        #generateBtn:hover, #downloadBtn:hover {
+        #generateBtn:hover, #downloadBtn:hover, #resetBtn:hover {
             background: #45a049;
+        }
+
+        #cancelBtn {
+            background: #f44336;
+        }
+
+        #cancelBtn:hover {
+            background: #d32f2f;
         }
 
         #generateBtn:disabled {
@@ -212,7 +239,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎬 Clipton</h1>
+            <h1>🎬 Clipton - Maximum Implementation</h1>
         </header>
 
         <div class="main-content">
@@ -232,6 +259,10 @@
                         <div class="file-input">
                             <input type="file" id="video1" accept="video/*">
                         </div>
+                        <div class="video-preview" id="preview1">
+                            <video controls></video>
+                        </div>
+                        <div class="video-info" id="info1"></div>
                         <div class="name-input-group">
                             <input type="text" id="name1" placeholder="Clip name">
                             <button class="magic-btn" data-video="1" title="Enhance name">✨</button>
@@ -250,6 +281,10 @@
                         <div class="file-input">
                             <input type="file" id="video2" accept="video/*">
                         </div>
+                        <div class="video-preview" id="preview2">
+                            <video controls></video>
+                        </div>
+                        <div class="video-info" id="info2"></div>
                         <div class="name-input-group">
                             <input type="text" id="name2" placeholder="Clip name">
                             <button class="magic-btn" data-video="2" title="Enhance name">✨</button>
@@ -268,6 +303,10 @@
                         <div class="file-input">
                             <input type="file" id="video3" accept="video/*">
                         </div>
+                        <div class="video-preview" id="preview3">
+                            <video controls></video>
+                        </div>
+                        <div class="video-info" id="info3"></div>
                         <div class="name-input-group">
                             <input type="text" id="name3" placeholder="Clip name">
                             <button class="magic-btn" data-video="3" title="Enhance name">✨</button>
@@ -286,6 +325,10 @@
                         <div class="file-input">
                             <input type="file" id="video4" accept="video/*">
                         </div>
+                        <div class="video-preview" id="preview4">
+                            <video controls></video>
+                        </div>
+                        <div class="video-info" id="info4"></div>
                         <div class="name-input-group">
                             <input type="text" id="name4" placeholder="Clip name">
                             <button class="magic-btn" data-video="4" title="Enhance name">✨</button>
@@ -304,12 +347,34 @@
                         <div class="file-input">
                             <input type="file" id="video5" accept="video/*">
                         </div>
+                        <div class="video-preview" id="preview5">
+                            <video controls></video>
+                        </div>
+                        <div class="video-info" id="info5"></div>
                         <div class="name-input-group">
                             <input type="text" id="name5" placeholder="Clip name">
                             <button class="magic-btn" data-video="5" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status5"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Quality Settings Section -->
+            <div class="quality-section">
+                <h2>Quality Settings</h2>
+                <div class="title-inputs">
+                    <select id="qualitySelect">
+                        <option value="low">Low Quality (1 Mbps)</option>
+                        <option value="medium" selected>Medium Quality (2.5 Mbps)</option>
+                        <option value="high">High Quality (5 Mbps)</option>
+                        <option value="ultra">Ultra Quality (10 Mbps)</option>
+                    </select>
+                    <select id="fpsSelect">
+                        <option value="24">24 FPS</option>
+                        <option value="30" selected>30 FPS</option>
+                        <option value="60">60 FPS</option>
+                    </select>
                 </div>
             </div>
 
@@ -335,6 +400,8 @@
             <!-- Generate Section -->
             <div class="generate-section">
                 <button id="generateBtn" disabled>🎬 Generate Video</button>
+                <button id="cancelBtn" style="display: none;">❌ Cancel Generation</button>
+                <button id="resetBtn">🔄 Reset All</button>
                 <div id="progress" style="display: none;">
                     <div id="progressBar">
                         <div style="width: 0%"></div>
@@ -355,7 +422,8 @@
             names: {},
             processedVideos: new Set(),
             recordedBlob: null,
-            isGenerating: false
+            isGenerating: false,
+            shouldCancel: false
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -363,7 +431,7 @@
         });
 
         function initializeApp() {
-            console.log('Initializing app...');
+            console.log('Initializing Maximum Implementation...');
             
             // Setup file input listeners
             for (let i = 1; i <= 5; i++) {
@@ -405,11 +473,22 @@
                 console.log('Generate button setup complete');
             }
 
+            // Setup cancel button
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', cancelGeneration);
+            }
+
+            // Setup reset button
+            const resetBtn = document.getElementById('resetBtn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', resetAll);
+            }
+
             // Setup download button
             const downloadBtn = document.getElementById('downloadBtn');
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', downloadVideo);
-                console.log('Download button setup complete');
             }
 
             // Initialize default values
@@ -460,6 +539,8 @@
         function handleVideoUpload(event, videoNum) {
             const file = event.target.files[0];
             const statusEl = document.getElementById(`status${videoNum}`);
+            const previewEl = document.getElementById(`preview${videoNum}`);
+            const infoEl = document.getElementById(`info${videoNum}`);
             
             if (!file) {
                 console.log(`No file selected for video ${videoNum}`);
@@ -470,12 +551,23 @@
             
             try {
                 showMessage(`Loading video ${videoNum}...`, 'info');
-                if (statusEl) statusEl.textContent = '⏳ Loading...';
-                statusEl.style.background = '#2196F3';
+                if (statusEl) {
+                    statusEl.textContent = '⏳ Loading...';
+                    statusEl.style.background = '#2196F3';
+                }
 
                 const video = document.createElement('video');
                 video.preload = 'metadata';
                 video.src = URL.createObjectURL(file);
+
+                // Show video preview
+                if (previewEl) {
+                    const previewVideo = previewEl.querySelector('video');
+                    if (previewVideo) {
+                        previewVideo.src = video.src;
+                        previewEl.style.display = 'block';
+                    }
+                }
 
                 const timeout = setTimeout(() => {
                     console.error(`Video ${videoNum} metadata loading timeout`);
@@ -485,6 +577,7 @@
                     }
                     showMessage(`Video ${videoNum} loading timeout`, 'error');
                     URL.revokeObjectURL(video.src);
+                    if (previewEl) previewEl.style.display = 'none';
                 }, 15000);
 
                 video.onloadedmetadata = () => {
@@ -493,6 +586,12 @@
                     console.log(`Video dimensions: ${video.videoWidth}x${video.videoHeight}, duration: ${video.duration}s`);
                     
                     state.videos[videoNum] = video;
+                    
+                    // Show video info
+                    if (infoEl) {
+                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        infoEl.textContent = `📁 ${file.name} | ${sizeMB} MB | ${video.videoWidth}x${video.videoHeight} | ${video.duration.toFixed(1)}s`;
+                    }
                     
                     if (statusEl) {
                         statusEl.textContent = '✅ Loaded';
@@ -511,6 +610,7 @@
                     }
                     showMessage(`Failed to load video ${videoNum}`, 'error');
                     URL.revokeObjectURL(video.src);
+                    if (previewEl) previewEl.style.display = 'none';
                 };
 
             } catch (error) {
@@ -550,11 +650,93 @@
             if (progress) progress.style.display = 'block';
             if (progressBar) progressBar.firstElementChild.style.width = `${percent}%`;
             if (progressText) progressText.textContent = text;
+            
+            // Update page title with progress
+            document.title = `${percent}% - Clipton`;
         }
 
         function hideProgress() {
             const progress = document.getElementById('progress');
             if (progress) progress.style.display = 'none';
+            document.title = 'Clipton - Maximum Implementation';
+        }
+
+        function cancelGeneration() {
+            if (state.isGenerating) {
+                state.shouldCancel = true;
+                showMessage('Cancelling generation...', 'info');
+            }
+        }
+
+        function resetAll() {
+            if (state.isGenerating) {
+                showMessage('Cannot reset while generating', 'error');
+                return;
+            }
+
+            // Reset state
+            state.videos = {};
+            state.resolutions = {};
+            state.names = {};
+            state.processedVideos = new Set();
+            state.recordedBlob = null;
+            state.isGenerating = false;
+            state.shouldCancel = false;
+
+            // Reset UI
+            for (let i = 1; i <= 5; i++) {
+                // Clear file inputs
+                const fileInput = document.getElementById(`video${i}`);
+                if (fileInput) fileInput.value = '';
+
+                // Clear previews
+                const previewEl = document.getElementById(`preview${i}`);
+                if (previewEl) {
+                    const previewVideo = previewEl.querySelector('video');
+                    if (previewVideo) {
+                        previewVideo.src = '';
+                        previewEl.style.display = 'none';
+                    }
+                }
+
+                // Clear info
+                const infoEl = document.getElementById(`info${i}`);
+                if (infoEl) infoEl.textContent = '';
+
+                // Clear status
+                const statusEl = document.getElementById(`status${i}`);
+                if (statusEl) {
+                    statusEl.textContent = '';
+                    statusEl.style.background = '';
+                }
+
+                // Clear names
+                const nameInput = document.getElementById(`name${i}`);
+                if (nameInput) nameInput.value = '';
+
+                // Reset resolutions
+                const resSelector = document.getElementById(`res${i}`);
+                if (resSelector) resSelector.value = 'mobile';
+            }
+
+            // Reset buttons
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn) generateBtn.disabled = true;
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            if (downloadBtn) downloadBtn.style.display = 'none';
+
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+
+            // Hide progress
+            hideProgress();
+
+            // Clear message
+            showMessage('All fields reset', 'info');
+
+            // Reinitialize defaults
+            initializeDefaults();
         }
 
         async function generateVideo() {
@@ -565,9 +747,27 @@
 
             try {
                 state.isGenerating = true;
+                state.shouldCancel = false;
                 console.log('Starting video generation...');
                 console.log('Loaded videos:', Object.keys(state.videos));
                 showMessage('Starting video generation...', 'info');
+
+                // Get quality settings
+                const qualitySelect = document.getElementById('qualitySelect');
+                const fpsSelect = document.getElementById('fpsSelect');
+                
+                const qualitySettings = {
+                    low: { bitrate: 1000000 },
+                    medium: { bitrate: 2500000 },
+                    high: { bitrate: 5000000 },
+                    ultra: { bitrate: 10000000 }
+                };
+                
+                const quality = qualitySelect.value || 'medium';
+                const fps = parseInt(fpsSelect.value) || 30;
+                const bitrate = qualitySettings[quality].bitrate;
+
+                console.log(`Quality: ${quality}, FPS: ${fps}, Bitrate: ${bitrate}`);
 
                 const titleText = document.getElementById('titleText').value || 'Best';
                 const top5Text = document.getElementById('top5Text').value || 'TOP 5';
@@ -575,28 +775,42 @@
                 const rankingObject = document.getElementById('rankingObject').value || 'Moments';
                 const objectColor = document.getElementById('objectColor').value || '#FFD700';
                 const endingText = document.getElementById('endingText').value || 'Ever';
+                const subscribeText = document.getElementById('subscribeText').value || 'Subscribe for more!';
 
                 const canvas = document.createElement('canvas');
                 canvas.width = 1080;
                 canvas.height = 1920;
                 const ctx = canvas.getContext('2d');
 
-                const stream = canvas.captureStream(30);
+                const stream = canvas.captureStream(fps);
                 const mediaRecorder = new MediaRecorder(stream, {
                     mimeType: 'video/webm',
-                    videoBitsPerSecond: 2500000
+                    videoBitsPerSecond: bitrate
                 });
+
+                // Show cancel button
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn) cancelBtn.style.display = 'inline-block';
 
                 const chunks = [];
                 mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
                 mediaRecorder.onstop = () => {
+                    if (state.shouldCancel) {
+                        showMessage('Generation cancelled', 'error');
+                        hideProgress();
+                        return;
+                    }
+
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     state.recordedBlob = blob;
                     
                     const downloadBtn = document.getElementById('downloadBtn');
                     if (downloadBtn) {
-                        downloadBtn.style.display = 'block';
+                        downloadBtn.style.display = 'inline-block';
                     }
+                    
+                    // Hide cancel button
+                    if (cancelBtn) cancelBtn.style.display = 'none';
                     
                     hideProgress();
                     showMessage('✅ Video generated successfully!', 'success');
@@ -608,6 +822,12 @@
                 const videoOrder = [3, 4, 5, 2, 1];
                 
                 for (let i = 0; i < videoOrder.length; i++) {
+                    if (state.shouldCancel) {
+                        console.log('Generation cancelled by user');
+                        mediaRecorder.stop();
+                        break;
+                    }
+
                     const videoNum = videoOrder[i];
                     const video = state.videos[videoNum];
                     
@@ -615,7 +835,8 @@
                     
                     if (!video) {
                         console.error(`Video ${videoNum} not found in state.videos:`, Object.keys(state.videos));
-                        throw new Error(`Video ${videoNum} not loaded`);
+                        showMessage(`Video ${videoNum} not loaded, skipping...`, 'error');
+                        continue;
                     }
                     
                     showProgress(20 + (i * 15), `Processing video ${i + 1}/5...`);
@@ -632,6 +853,12 @@
                         const maxFrames = 600;
                         
                         const renderFrame = () => {
+                            if (state.shouldCancel) {
+                                video.pause();
+                                resolve();
+                                return;
+                            }
+
                             frameCount++;
                             
                             if (video.ended || video.paused || frameCount > maxFrames) {
@@ -653,20 +880,33 @@
                     });
                     
                     video.pause();
+
+                    // Show subscribe button between videos 5 and 2
+                    if (videoNum === 5) {
+                        console.log('Showing subscribe button...');
+                        showProgress(60, 'Showing subscribe button...');
+                        await showSubscribeButton(ctx, canvas.width, canvas.height, video, subscribeText);
+                        await new Promise(r => setTimeout(r, 5000)); // 5 seconds
+                    }
                 }
                 
-                showProgress(95, 'Finalizing...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                mediaRecorder.stop();
-                showProgress(100, 'Complete!');
+                if (!state.shouldCancel) {
+                    showProgress(95, 'Finalizing...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    mediaRecorder.stop();
+                    showProgress(100, 'Complete!');
+                }
                 
             } catch (error) {
                 console.error('Error:', error);
                 showMessage('❌ Error: ' + error.message, 'error');
                 hideProgress();
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn) cancelBtn.style.display = 'none';
             } finally {
                 state.isGenerating = false;
+                state.shouldCancel = false;
             }
         }
 
@@ -709,6 +949,64 @@
             } catch (e) {
                 console.warn('Failed to draw video frame:', e);
             }
+        }
+
+        async function showSubscribeButton(ctx, width, height, currentVideo, subscribeText) {
+            // Draw the current video frame (paused)
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            if (currentVideo) {
+                drawVideoFrame(ctx, currentVideo, width, height, 5);
+            }
+            
+            // Add semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw subscribe button
+            const buttonWidth = 500;
+            const buttonHeight = 120;
+            const buttonX = (width - buttonWidth) / 2;
+            const buttonY = (height - buttonHeight) / 2;
+            
+            // Draw button background with gradient
+            const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
+            gradient.addColorStop(0, '#FF0000');
+            gradient.addColorStop(1, '#CC0000');
+            ctx.fillStyle = gradient;
+            
+            // Draw rounded rectangle
+            const radius = 20;
+            ctx.beginPath();
+            ctx.moveTo(buttonX + radius, buttonY);
+            ctx.lineTo(buttonX + buttonWidth - radius, buttonY);
+            ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY, buttonX + buttonWidth, buttonY + radius);
+            ctx.lineTo(buttonX + buttonWidth, buttonY + buttonHeight - radius);
+            ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY + buttonHeight, buttonX + buttonWidth - radius, buttonY + buttonHeight);
+            ctx.lineTo(buttonX + radius, buttonY + buttonHeight);
+            ctx.quadraticCurveTo(buttonX, buttonY + buttonHeight, buttonX, buttonY + buttonHeight - radius);
+            ctx.lineTo(buttonX, buttonY + radius);
+            ctx.quadraticCurveTo(buttonX, buttonY, buttonX + radius, buttonY);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw white border
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Draw subscribe text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 42px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(subscribeText.toUpperCase(), width / 2, height / 2);
+            
+            // Add sparkle emojis
+            ctx.font = '36px Arial';
+            ctx.fillText('✨', buttonX - 50, height / 2);
+            ctx.fillText('✨', buttonX + buttonWidth + 50, height / 2);
         }
 
         function drawOverlays(ctx, width, height, titleText, top5Text, top5Color, rankingObject, objectColor, endingText, currentVideo) {
