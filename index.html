@@ -233,6 +233,32 @@
         .message.info {
             background: #2196F3;
         }
+    
+        .file-input.drag-over {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px dashed #4CAF50;
+        }
+
+        .file-input {
+            transition: all 0.3s ease;
+        }
+
+    
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .success-animation {
+            animation: successPulse 0.5s ease-in-out;
+        }
+
+        @keyframes checkmark {
+            0% { stroke-dashoffset: 100; }
+            100% { stroke-dashoffset: 0; }
+        }
+
     </style>
 <script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
 </head>
@@ -265,7 +291,7 @@
                         <div class="video-info" id="info1"></div>
                         <div class="name-input-group">
                             <input type="text" id="name1" placeholder="Clip name">
-                            <button class="magic-btn" data-video="1" title="Enhance name">✨</button>
+                            <button class="magic-btn" tabindex="0" data-video="1" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status1"></div>
                     </div>
@@ -287,7 +313,7 @@
                         <div class="video-info" id="info2"></div>
                         <div class="name-input-group">
                             <input type="text" id="name2" placeholder="Clip name">
-                            <button class="magic-btn" data-video="2" title="Enhance name">✨</button>
+                            <button class="magic-btn" tabindex="0" data-video="2" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status2"></div>
                     </div>
@@ -309,7 +335,7 @@
                         <div class="video-info" id="info3"></div>
                         <div class="name-input-group">
                             <input type="text" id="name3" placeholder="Clip name">
-                            <button class="magic-btn" data-video="3" title="Enhance name">✨</button>
+                            <button class="magic-btn" tabindex="0" data-video="3" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status3"></div>
                     </div>
@@ -331,7 +357,7 @@
                         <div class="video-info" id="info4"></div>
                         <div class="name-input-group">
                             <input type="text" id="name4" placeholder="Clip name">
-                            <button class="magic-btn" data-video="4" title="Enhance name">✨</button>
+                            <button class="magic-btn" tabindex="0" data-video="4" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status4"></div>
                     </div>
@@ -353,7 +379,7 @@
                         <div class="video-info" id="info5"></div>
                         <div class="name-input-group">
                             <input type="text" id="name5" placeholder="Clip name">
-                            <button class="magic-btn" data-video="5" title="Enhance name">✨</button>
+                            <button class="magic-btn" tabindex="0" data-video="5" title="Enhance name">✨</button>
                         </div>
                         <div class="status" id="status5"></div>
                     </div>
@@ -364,13 +390,13 @@
             <div class="quality-section">
                 <h2>Quality Settings</h2>
                 <div class="title-inputs">
-                    <select id="qualitySelect">
+                    <select id="qualitySelect" aria-label="Select video quality">
                         <option value="low">Low Quality (1 Mbps)</option>
                         <option value="medium" selected>Medium Quality (2.5 Mbps)</option>
                         <option value="high">High Quality (5 Mbps)</option>
                         <option value="ultra">Ultra Quality (10 Mbps)</option>
                     </select>
-                    <select id="fpsSelect">
+                    <select id="fpsSelect" aria-label="Select frames per second">
                         <option value="24">24 FPS</option>
                         <option value="30" selected>30 FPS</option>
                         <option value="60">60 FPS</option>
@@ -394,21 +420,28 @@
             <!-- Subscribe Button Section -->
             <div class="subscribe-section">
                 <h2>Subscribe Button</h2>
-                <input type="text" id="subscribeText" placeholder="Subscribe text" value="Subscribe for more!">
+                <input type="text" id="subscribeText" aria-label="Subscribe button text" placeholder="Subscribe text" value="Subscribe for more!">
             </div>
 
             <!-- Generate Section -->
             <div class="generate-section">
-                <button id="generateBtn" disabled>🎬 Generate Video</button>
-                <button id="cancelBtn" style="display: none;">❌ Cancel Generation</button>
-                <button id="resetBtn">🔄 Reset All</button>
+                <button id="generateBtn" aria-label="Generate compilation video" disabled>🎬 Generate Video</button>
+                <button id="cancelBtn" aria-label="Cancel video generation" style="display: none;">❌ Cancel Generation</button>
+                <button id="resetBtn" aria-label="Reset all inputs and clear videos">🔄 Reset All</button>
                 <div id="progress" style="display: none;">
                     <div id="progressBar">
                         <div style="width: 0%"></div>
                     </div>
                     <div id="progressText">Processing...</div>
                 </div>
-                <button id="downloadBtn" style="display: none;">⬇️ Download Video</button>
+                
+                <div id="videoPreviewSection" style="display: none; margin-top: 20px;">
+                    <h3>Preview Generated Video</h3>
+                    <video id="generatedVideoPreview" controls style="width: 100%; max-width: 400px; background: #000; border-radius: 5px;"></video>
+                    <p id="outputFileSize" style="margin-top: 10px;"></p>
+                </div>
+
+                <button id="downloadBtn" aria-label="Download generated video" style="display: none;">⬇️ Download Video</button>
             </div>
 
             <div id="message" class="message"></div>
@@ -427,6 +460,44 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+        // Network error handling
+        window.addEventListener('offline', () => {
+            showMessage('⚠️ You are offline. Some features may not work.', 'error');
+        });
+        
+        window.addEventListener('online', () => {
+            showMessage('✅ Connection restored.', 'success');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + G = Generate
+            if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                e.preventDefault();
+                const generateBtn = document.getElementById('generateBtn');
+                if (generateBtn && !generateBtn.disabled) {
+                    generateBtn.click();
+                }
+            }
+            
+            // Ctrl/Cmd + R = Reset
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                const resetBtn = document.getElementById('resetBtn');
+                if (resetBtn) {
+                    resetBtn.click();
+                }
+            }
+            
+            // Escape = Cancel
+            if (e.key === 'Escape') {
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn && cancelBtn.style.display !== 'none') {
+                    cancelBtn.click();
+                }
+            }
+        });
+
             initializeApp();
         });
 
@@ -448,6 +519,40 @@
                 });
 
                 if (videoInput) {
+            // Add drag-and-drop support
+            const fileInput = document.getElementById(`video${i}`);
+            const fileInputContainer = fileInput.parentElement;
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileInputContainer.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileInputContainer.addEventListener(eventName, () => {
+                    fileInputContainer.classList.add('drag-over');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileInputContainer.addEventListener(eventName, () => {
+                    fileInputContainer.classList.remove('drag-over');
+                }, false);
+            });
+            
+            fileInputContainer.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleVideoUpload({ target: fileInput }, i);
+                }
+            }, false);
+
                     videoInput.addEventListener('change', (e) => handleVideoUpload(e, i));
                 }
                 if (resSelector) {
@@ -554,6 +659,19 @@
                 if (statusEl) {
                     statusEl.textContent = '⏳ Loading...';
                     statusEl.style.background = '#2196F3';
+                }
+
+                
+                // Check file size (limit to 500MB)
+                const maxSize = 500 * 1024 * 1024; // 500MB
+                if (file.size > maxSize) {
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Too Large';
+                        statusEl.style.background = '#f44336';
+                    }
+                    showMessage(`Video ${videoNum} is too large (${sizeMB}MB). Maximum size is 500MB.`, 'error');
+                    return;
                 }
 
                 const video = document.createElement('video');
@@ -739,7 +857,44 @@
             initializeDefaults();
         }
 
+        
+        function estimateOutputSize() {
+            const qualitySelect = document.getElementById('qualitySelect');
+            const fpsSelect = document.getElementById('fpsSelect');
+            
+            const qualitySettings = {
+                low: { bitrate: 1000000 },
+                medium: { bitrate: 2500000 },
+                high: { bitrate: 5000000 },
+                ultra: { bitrate: 10000000 }
+            };
+            
+            const quality = qualitySelect.value || 'medium';
+            const bitrate = qualitySettings[quality].bitrate;
+            
+            // Calculate total duration
+            let totalDuration = 5; // 5 seconds for subscribe button
+            for (let i = 1; i <= 5; i++) {
+                const video = state.videos[i];
+                if (video && video.duration) {
+                    totalDuration += Math.min(video.duration, 10000 / 30); // Max frames / fps
+                }
+            }
+            
+            // Estimate size: (bitrate * duration) / 8 (convert bits to bytes)
+            const estimatedBytes = (bitrate * totalDuration) / 8;
+            const estimatedMB = (estimatedBytes / (1024 * 1024)).toFixed(2);
+            
+            return estimatedMB;
+        }
+
         async function generateVideo() {
+            // Check MediaRecorder support
+            if (!window.MediaRecorder) {
+                showMessage('❌ Your browser does not support video recording. Please use Chrome, Firefox, or Edge.', 'error');
+                return;
+            }
+
             if (state.isGenerating) {
                 showMessage('Already generating...', 'error');
                 return;
@@ -814,6 +969,27 @@
                     
                     hideProgress();
                     showMessage('✅ Video generated successfully!', 'success');
+                const generateBtn = document.getElementById('generateBtn');
+                if (generateBtn) {
+                    generateBtn.classList.add('success-animation');
+                    setTimeout(() => generateBtn.classList.remove('success-animation'), 500);
+                }
+
+                // Show preview
+                const previewSection = document.getElementById('videoPreviewSection');
+                const previewVideo = document.getElementById('generatedVideoPreview');
+                const fileSizeEl = document.getElementById('outputFileSize');
+                
+                if (previewSection && previewVideo) {
+                    previewVideo.src = url;
+                    previewSection.style.display = 'block';
+                    
+                    const sizeMB = (state.recordedBlob.size / (1024 * 1024)).toFixed(2);
+                    if (fileSizeEl) {
+                        fileSizeEl.textContent = `File size: ${sizeMB} MB`;
+                    }
+                }
+
                 };
 
                 mediaRecorder.start();
