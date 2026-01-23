@@ -850,7 +850,7 @@
                     
                     await new Promise((resolve) => {
                         let frameCount = 0;
-                        const maxFrames = 600;
+                        const maxFrames = 10000;
                         
                         const renderFrame = () => {
                             if (state.shouldCancel) {
@@ -885,8 +885,7 @@
                     if (videoNum === 5) {
                         console.log('Showing subscribe button...');
                         showProgress(60, 'Showing subscribe button...');
-                        await showSubscribeButton(ctx, canvas.width, canvas.height, video, subscribeText);
-                        await new Promise(r => setTimeout(r, 5000)); // 5 seconds
+                        await showSubscribeButton(ctx, canvas.width, canvas.height, video, subscribeText, fps);
                     }
                 }
                 
@@ -951,62 +950,77 @@
             }
         }
 
-        async function showSubscribeButton(ctx, width, height, currentVideo, subscribeText) {
-            // Draw the current video frame (paused)
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, width, height);
+        async function showSubscribeButton(ctx, width, height, currentVideo, subscribeText, fps = 30) {
+            const duration = 5000;
+            const totalFrames = (duration / 1000) * fps;
+            let currentFrame = 0;
             
-            if (currentVideo) {
-                drawVideoFrame(ctx, currentVideo, width, height, 5);
-            }
-            
-            // Add semi-transparent overlay
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, width, height);
-            
-            // Draw subscribe button
-            const buttonWidth = 500;
-            const buttonHeight = 120;
-            const buttonX = (width - buttonWidth) / 2;
-            const buttonY = (height - buttonHeight) / 2;
-            
-            // Draw button background with gradient
-            const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
-            gradient.addColorStop(0, '#FF0000');
-            gradient.addColorStop(1, '#CC0000');
-            ctx.fillStyle = gradient;
-            
-            // Draw rounded rectangle
-            const radius = 20;
-            ctx.beginPath();
-            ctx.moveTo(buttonX + radius, buttonY);
-            ctx.lineTo(buttonX + buttonWidth - radius, buttonY);
-            ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY, buttonX + buttonWidth, buttonY + radius);
-            ctx.lineTo(buttonX + buttonWidth, buttonY + buttonHeight - radius);
-            ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY + buttonHeight, buttonX + buttonWidth - radius, buttonY + buttonHeight);
-            ctx.lineTo(buttonX + radius, buttonY + buttonHeight);
-            ctx.quadraticCurveTo(buttonX, buttonY + buttonHeight, buttonX, buttonY + buttonHeight - radius);
-            ctx.lineTo(buttonX, buttonY + radius);
-            ctx.quadraticCurveTo(buttonX, buttonY, buttonX + radius, buttonY);
-            ctx.closePath();
-            ctx.fill();
-            
-            // Draw white border
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 4;
-            ctx.stroke();
-            
-            // Draw subscribe text
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 42px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(subscribeText.toUpperCase(), width / 2, height / 2);
-            
-            // Add sparkle emojis
-            ctx.font = '36px Arial';
-            ctx.fillText('✨', buttonX - 50, height / 2);
-            ctx.fillText('✨', buttonX + buttonWidth + 50, height / 2);
+            return new Promise((resolve) => {
+                const renderSubscribeFrame = () => {
+                    if (state.shouldCancel) {
+                        resolve();
+                        return;
+                    }
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    if (currentVideo) {
+                        drawVideoFrame(ctx, currentVideo, width, height, 5);
+                    }
+                    
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    const buttonWidth = 500;
+                    const buttonHeight = 120;
+                    const buttonX = (width - buttonWidth) / 2;
+                    const buttonY = (height - buttonHeight) / 2;
+                    
+                    const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + buttonHeight);
+                    gradient.addColorStop(0, '#FF0000');
+                    gradient.addColorStop(1, '#CC0000');
+                    ctx.fillStyle = gradient;
+                    
+                    const radius = 20;
+                    ctx.beginPath();
+                    ctx.moveTo(buttonX + radius, buttonY);
+                    ctx.lineTo(buttonX + buttonWidth - radius, buttonY);
+                    ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY, buttonX + buttonWidth, buttonY + radius);
+                    ctx.lineTo(buttonX + buttonWidth, buttonY + buttonHeight - radius);
+                    ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY + buttonHeight, buttonX + buttonWidth - radius, buttonY + buttonHeight);
+                    ctx.lineTo(buttonX + radius, buttonY + buttonHeight);
+                    ctx.quadraticCurveTo(buttonX, buttonY + buttonHeight, buttonX, buttonY + buttonHeight - radius);
+                    ctx.lineTo(buttonX, buttonY + radius);
+                    ctx.quadraticCurveTo(buttonX, buttonY, buttonX + radius, buttonY);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 42px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(subscribeText.toUpperCase(), width / 2, height / 2);
+                    
+                    ctx.font = '36px Arial';
+                    ctx.fillText('✨', buttonX - 50, height / 2);
+                    ctx.fillText('✨', buttonX + buttonWidth + 50, height / 2);
+                    
+                    currentFrame++;
+                    
+                    if (currentFrame >= totalFrames) {
+                        resolve();
+                    } else {
+                        requestAnimationFrame(renderSubscribeFrame);
+                    }
+                };
+                
+                renderSubscribeFrame();
+            });
         }
 
         function drawOverlays(ctx, width, height, titleText, top5Text, top5Color, rankingObject, objectColor, endingText, currentVideo) {
@@ -1072,7 +1086,7 @@
                 ctx.strokeText(numberText, numberX, numberY);
                 ctx.fillText(numberText, numberX, numberY);
                 
-                if (state.processedVideos.has(i) && state.names[i]) {
+                if (state.processedVideos.has(i) && state.names[i] && i === currentVideo) {
                     ctx.font = `bold ${nameFontSize}px Arial`;
                     ctx.fillStyle = '#FFF';
                     ctx.strokeText(state.names[i], nameX, numberY + 5);
