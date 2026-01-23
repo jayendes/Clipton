@@ -993,6 +993,11 @@
                 };
 
                 mediaRecorder.start();
+                
+                // Show estimated output size
+                const estimatedSize = estimateOutputSize();
+                showMessage(`📊 Estimated output size: ${estimatedSize} MB`, 'info');
+                
                 showProgress(0, 'Initializing...');
 
                 const videoOrder = [3, 4, 5, 2, 1];
